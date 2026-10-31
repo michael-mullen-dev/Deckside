@@ -1,0 +1,17 @@
+# Deckside is a plain static app: no build step, publish the repo root.
+[build]
+  publish = "."
+
+# Always check for a fresh copy of the app and its updater, so new versions show up right away.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache"
