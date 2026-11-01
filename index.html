@@ -1985,12 +1985,16 @@ function sheetQuick(){
 function attDate(){ return (UI.tab==='attend'&&!UI.sheet&&UI.attDate)||todayISO(); }
 /* removed swimmers (left the team) stay in S.roster with out:true so their past times keep their names; they're hidden everywhere else */
 function team(){ return S.roster.filter(s=>!s.out); }
+/* who's picked in the practice timer: today's attendance, except in Test mode, where picks never touch attendance */
+const testPicking=()=>!!(S.testMode&&UI.sheet);
+function pickList(){ return testPicking()?(UI.testPicks||[]).filter(id=>swimmer(id)):attList(attDate()); }
+function setPicks(ids){ if(testPicking()){ UI.testPicks=[...new Set(ids)]; if(UI.quick) UI.quick.ids=groupIds(UI.testPicks); } else setAtt(attDate(),ids); }
 function attList(d){ S.attendance=S.attendance||{}; return (S.attendance[d]||[]).filter(id=>swimmer(id)); }
 function setAtt(d,ids){ S.attendance=S.attendance||{}; if(ids.length) S.attendance[d]=ids; else delete S.attendance[d]; if(d===todayISO()&&UI.quick) UI.quick.ids=groupIds(ids); saveAttSoon(); }
 let attT=null; function saveAttSoon(){ clearTimeout(attT); attT=setTimeout(()=>save('core'),250); }
 const GROUPS=[['all','All'],['A','A'],['B','B'],['none','None']];
 function grpOk(s){ if(!hasGroups()) return true; const g=UI.grp||'all'; return g==='all'||(g==='none'?!s.group:s.group===g); }
-function ensureQuick(){ if(!UI.quick) UI.quick=UI.lastQuick?clone(UI.lastQuick):{dist:50,stroke:'FL',course:'SCY',ids:[]}; UI.quick.ids=groupIds(attList(todayISO())); return UI.quick; }
+function ensureQuick(){ if(!UI.quick) UI.quick=UI.lastQuick?clone(UI.lastQuick):{dist:50,stroke:'FL',course:'SCY',ids:[]}; UI.quick.ids=groupIds(S.testMode?(UI.testPicks||[]):attList(todayISO())); return UI.quick; }
 function groupSegs(){ const counts={all:team().length,A:team().filter(s=>s.group==='A').length,B:team().filter(s=>s.group==='B').length,none:team().filter(s=>!s.group).length};
   return `<div class="segs grpsegs" role="group" aria-label="Group">${GROUPS.filter(([v])=>v!=='none'||counts.none).map(([v,t])=>`<button data-act="grp" data-v="${v}" aria-pressed="${(UI.grp||'all')===v}">${t}<span class="n">${counts[v]}</span></button>`).join('')}</div>`; }
 function rosterChecklist(q,opts){
@@ -2000,7 +2004,7 @@ function rosterChecklist(q,opts){
 }
 function pickedChips(q){ return q.ids.length?q.ids.map(id=>`<span class="chip later">${esc(shortName(id))}</span>`).join(''):'<span class="small muted">Tap names below to pick today\'s swimmers.</span>'; }
 function updateQuickUI(){
-  const d=attDate(), ids=attList(d); const q=UI.quick;
+  const d=attDate(), ids=UI.sheet?pickList():attList(d); const q=UI.quick;
   document.querySelectorAll('.q-count').forEach(c=>c.textContent=qCountText());
   document.querySelectorAll('.att-sum').forEach(c=>c.innerHTML=attSummary(d));
   document.querySelectorAll('.att-hero').forEach(c=>c.innerHTML=attHero(d));
@@ -2202,7 +2206,7 @@ function sheetLineup(){
 function cancelBtn(m){ if(m.test) return ''; return `<div class="row" style="justify-content:center;margin-top:18px"><button class="btn danger ${UI.armed==='cancel-day'?'armed':''}" data-act="cancel-day">${UI.armed==='cancel-day'?'Tap again: don\'t save any of these times':(m.practice?'Cancel this race day':'Cancel this meet')+' · don\'t save times'}</button></div>`; }
 function cancelBanner(m){ return `<div class="banner" style="background:var(--bad-soft);color:var(--ink)"><span><b>${m.practice?'Race day':'Meet'} canceled.</b> None of these times count as best times, drops, records or cuts.</span><span class="row" style="gap:6px;flex-wrap:nowrap"><button class="btn sm" data-act="meet-test" data-v="0">Undo</button><button class="btn sm ghost" data-act="cancel-hide" aria-label="Close" style="min-width:40px;font-size:18px">✕</button></span></div>`; }
 function practiceId(day){ const base='pr'+(day||todayISO()).replace(/-/g,'')+(S.curGrp?'-'+S.curGrp:''); let id=base, n=2; while(S.meets[id]&&S.meets[id].canceled) id=base+'-'+(n++); return id; }
-function qCountText(){ const all=attList(todayISO()).length; const n=UI.quick?UI.quick.ids.length:all; return S.curGrp&&hasGroups()?`Swimmers · ${n} White ${S.curGrp} here today (${all} total)`:`Swimmers · ${all} here today`; }
+function qCountText(){ if(S.testMode&&UI.sheet) return `Swimmers · ${(UI.quick?UI.quick.ids:pickList()).length} picked · test, not attendance`; const all=attList(todayISO()).length; const n=UI.quick?UI.quick.ids.length:all; return S.curGrp&&hasGroups()?`Swimmers · ${n} White ${S.curGrp} here today (${all} total)`:`Swimmers · ${all} here today`; }
 function hasGroups(){ return S.roster.some(s=>s.group); }
 function groupIds(ids){ if(!S.curGrp||!hasGroups()) return ids.slice(); return ids.filter(id=>{ const g=(swimmer(id)||{}).group; return !g||g===S.curGrp; }); }
 function practiceMeet(course){
@@ -3165,15 +3169,15 @@ document.addEventListener('click',async ev=>{
     case 'q-dist': UI.quick.dist=+v; UI.quick.dists={}; renderSheet(); break;
     case 'q-course': UI.quick.course=v; renderSheet(); break;
     case 'q-stroke': UI.quick.stroke=v; renderSheet(); break;
-    case 'q-sw': { const d=attDate(); const ids=attList(d); setAtt(d,ids.includes(v)?ids.filter(x=>x!==v):[...ids,v]); updateQuickUI(); break; }
+    case 'q-sw': { const ids=pickList(); setPicks(ids.includes(v)?ids.filter(x=>x!==v):[...ids,v]); updateQuickUI(); break; }
     case 'grp': { UI.grp=v; try{ localStorage.setItem(DK+'.grp',v); }catch(e){} UI.sheet?renderSheet():render(); break; }
     case 'att-date': { UI.attDate=v||null; render(); break; }
     case 'att-shift': { const cur=new Date((UI.attDate||todayISO())+'T12:00:00'); cur.setDate(cur.getDate()+(+v)); const iso=cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(cur.getDate()).padStart(2,'0'); if(iso>todayISO()) break; UI.attDate=iso===todayISO()?null:iso; render(); break; }
     case 'sw-grp': { const s0=swimmer(v); if(!s0) break; s0.group=b.dataset.g; save('core'); UI.sheet?renderSheet():render(); break; }
     case 'copy-att': { const txt=attText(attDate()); try{ await navigator.clipboard.writeText(txt); toast('Attendance copied'); }catch(e){ openSheet({type:'restore'}); setTimeout(()=>{const t=$('#restore-text'); if(t){ t.value=txt; t.select(); }},30); toast('Select all and copy'); } break; }
-    case 'q-all': { const scope=b.closest('.card,.stack')||document; const vis=[...scope.querySelectorAll('.ck[data-v]')].filter(x=>!x.hidden).map(x=>x.dataset.v); const d=attDate(); setAtt(d,[...new Set([...attList(d),...vis])]); updateQuickUI(); break; }
+    case 'q-all': { const scope=b.closest('.card,.stack')||document; const vis=[...scope.querySelectorAll('.ck[data-v]')].filter(x=>!x.hidden).map(x=>x.dataset.v); setPicks([...pickList(),...vis]); updateQuickUI(); break; }
     case 'q-all-old': { ensureQuick(); const scope=b.closest('.card,.stack')||document; const vis=[...scope.querySelectorAll('.ck[data-v]')].filter(x=>!x.hidden).map(x=>x.dataset.v); UI.quick.ids=[...new Set([...UI.quick.ids,...vis])]; updateQuickUI(); break; }
-    case 'q-none': { const d=attDate(); if(!arm('q-none')){ toast('Tap Clear again to uncheck everyone'); break; } const scope=b.closest('.card,.stack')||document; const vis=new Set([...scope.querySelectorAll('.ck[data-v]')].filter(x=>!x.hidden).map(x=>x.dataset.v)); setAtt(d,attList(d).filter(id=>!vis.has(id))); updateQuickUI(); break; }
+    case 'q-none': { const d=attDate(); if(!arm('q-none')){ toast('Tap Clear again to uncheck everyone'); break; } const scope=b.closest('.card,.stack')||document; const vis=new Set([...scope.querySelectorAll('.ck[data-v]')].filter(x=>!x.hidden).map(x=>x.dataset.v)); setPicks(pickList().filter(id=>!vis.has(id))); updateQuickUI(); break; }
     case 'q-ev': { const q=UI.quick; const [st,ds]=v.split('|'); const d=+ds; q.dists=q.dists||{};
       if(q.strokes.includes(st)&&distFor(q,st)===d) q.strokes=q.strokes.filter(x=>x!==st);
       else { q.dists[st]=d; if(!q.strokes.includes(st)) q.strokes=['FL','BK','BR','FR','IM'].filter(x=>x===st||q.strokes.includes(x)); }
@@ -3243,7 +3247,10 @@ document.addEventListener('click',async ev=>{
     case 'att-rm': { if(!arm('att-rm-'+v)){ render(); break; } const sm=swimmer(v); if(sm){ sm.out=Date.now(); for(const d in (S.attendance||{})) if(d>=todayISO()) S.attendance[d]=S.attendance[d].filter(x=>x!==v); } save('core'); render(); toast(swName(v)+' removed from the roster. Past times are kept.'); break; }
     case 'sw-back': { const sm=swimmer(v); if(sm){ delete sm.out; save('core'); } UI.sheet?renderSheet():null; render(); toast(swName(v)+' is back on the roster'); break; }
     case 'finish-meet': { if(!m||m.practice) break; const fin=v!=='0'; m.finished=fin; if(fin){ m.now=null; m.finishedAt=Date.now(); } else delete m.finishedAt; m.updatedAt=Date.now(); save(m.id); window.scrollTo(0,0); render(); toast(fin?'Meet finished. Everything is saved.':'Timing reopened.'); break; }
-    case 'close-day': { if(!m) break; const what=m.practice?(m.plan?'Race day':'Practice'):'Meet'; S.active=null; UI.lineup=null; UI.tab='meet'; save('core'); window.scrollTo(0,0); render(); toast(what+' saved and closed. It\'s in Setup › Saved meets.'); break; }
+    case 'close-day': { if(!m) break;
+      { const timed=m.heats.filter(h=>(m.timers&&m.timers[h.k]&&m.timers[h.k].t0)||m.entries.some(e=>e.hk===h.k&&m.swims&&m.swims[e.id]&&m.swims[e.id].time!=null));
+        if(m.test||(timed.length&&timed.every(h=>h.test))){ const id=m.id; delete S.meets[id]; S.meetOrder=S.meetOrder.filter(x=>x!==id); S.deleted=[...(S.deleted||[]),id]; sync.dirty.add('del_'+id); if(sync.db) ref('raw_'+id).delete().catch(()=>{}); try{localStorage.removeItem(DK+'.raw.'+id);}catch(e){}
+          S.active=null; UI.lineup=null; UI.tab='meet'; save('core'); window.scrollTo(0,0); render(); toast('Test ended. Nothing was saved.'); break; } } const what=m.practice?(m.plan?'Race day':'Practice'):'Meet'; S.active=null; UI.lineup=null; UI.tab='meet'; save('core'); window.scrollTo(0,0); render(); toast(what+' saved and closed. It\'s in Setup › Saved meets.'); break; }
     case 'open-saved': { UI.tab='setup'; UI.secOpen.meets=true; if(UI.sheet){ UI.sheet=null; $('#sheet').hidden=true; } render(); setTimeout(()=>{ const el=document.querySelector('details[data-sec=meets]'); if(el) el.scrollIntoView({block:'start'}); },30); break; }
     case 'gear': { UI.tab='setup'; if(UI.sheet){ UI.sheet=null; $('#sheet').hidden=true; } render(); window.scrollTo(0,0); break; }
     case 'hide-setup': { UI.hideSetup=!UI.hideSetup; try{ localStorage.setItem(LS+'.hideSetup',UI.hideSetup?'1':'0'); }catch(e){} if(UI.hideSetup){ UI.tab='meet'; try{ localStorage.setItem(LS+'.tab','meet'); }catch(e){} toast('Setup is hidden. Tap the gear at the top to get back to it.'); } render(); break; }
@@ -3347,7 +3354,7 @@ document.addEventListener('toggle',ev=>{ const d=ev.target; if(!d||!d.dataset||!
 document.addEventListener('change',async ev=>{
   const t=ev.target;
   if(t.id==='sw-pick'){ if(t.value) openSheet({type:'swimmer',v:t.value}); t.value=''; return; }
-  if(t.dataset&&t.dataset.act==='test-mode'){ S.testMode=t.checked; save('core'); if(UI.sheet) renderSheet(); render(); toast(t.checked?'Test mode on. These times won\'t count.':'Test mode off. New sets count.'); return; }
+  if(t.dataset&&t.dataset.act==='test-mode'){ S.testMode=t.checked; UI.testPicks=[]; if(UI.quick) UI.quick.ids=t.checked?[]:groupIds(attList(todayISO())); save('core'); if(UI.sheet) renderSheet(); render(); toast(t.checked?'Test mode on. These times won\'t count.':'Test mode off. New sets count.'); return; }
   if(t.id==='hideDone'){ UI.hideDone=t.checked; try{localStorage.setItem(LS+'.hide',t.checked?'1':'0');}catch(e){} render(); return; }
   if(t.dataset.act==='dq'){ const m=M(); m.swims=m.swims||{}; const sw=m.swims[t.dataset.v]=m.swims[t.dataset.v]||{tags:[],note:''}; sw.dq=t.checked; if(!sw.at) sw.at=Date.now(); save(m.id); renderSheet(); return; }
   if(t.id==='imp-file'&&t.files&&t.files[0]){ const f=t.files[0]; UI.draft={...(UI.draft||{}),busy:f.name,error:null,result:null}; renderSheet();
