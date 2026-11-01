@@ -2380,16 +2380,18 @@ function rankScores(){
   return out.sort((a,b)=>b.score-a.score);
 }
 function viewRank(){
-  const g=UI.rankGrp||'all', sx=UI.rankSex||'';
-  const all=rankScores(); const list=all.filter(r=>(g==='all'||r.s.group===g)&&(!sx||r.s.gender===sx));
+  const g=UI.rankGrp||'all', sx=UI.rankSex||'', ag=UI.rankAge||'';
+  const ageOk=r=>!ag||(r.s.age!=null&&(ag==='10'?r.s.age<=10:r.s.age>=11));
+  const all=rankScores(); const list=all.filter(r=>(g==='all'||r.s.group===g)&&(!sx||r.s.gender===sx)&&ageOk(r));
   const aScores=all.filter(r=>r.s.group==='A').map(r=>r.score).sort((a,b)=>a-b); const aMid=aScores.length?aScores[Math.floor(aScores.length/2)]:null;
   let h=`<section class="stack"><div class="sec-h"><h2>Rankings</h2><span class="small muted">${list.length} swimmers</span></div>
     <div class="row" style="gap:8px;flex-wrap:wrap"><span class="rfilter" role="group" aria-label="Group">${[['all','All'],['A','White A'],['B','White B']].map(([x,t])=>`<button data-act="rank-grp" data-v="${x}" aria-pressed="${g===x}">${t}</button>`).join('')}</span>
-    <span class="rfilter" role="group" aria-label="Boys or girls">${[['','Everyone'],['F','Girls'],['M','Boys']].map(([x,t])=>`<button data-act="rank-sex" data-v="${x}" aria-pressed="${sx===x}">${t}</button>`).join('')}</span></div>`;
+    <span class="rfilter" role="group" aria-label="Boys or girls">${[['','Everyone'],['F','Girls'],['M','Boys']].map(([x,t])=>`<button data-act="rank-sex" data-v="${x}" aria-pressed="${sx===x}">${t}</button>`).join('')}</span>
+    <span class="rfilter" role="group" aria-label="Age">${[['','All ages'],['10','10 & under'],['11','11 & over']].map(([x,t])=>`<button data-act="rank-age" data-v="${x}" aria-pressed="${ag===x}">${t}</button>`).join('')}</span></div>`;
   if(!list.length) return h+'<div class="card empty"><p>No swimmers with times yet. Rankings fill in from best times and practice swims.</p></div></section>';
   h+=`<div class="rank">${list.map((r,i)=>{ const up=r.s.group==='B'&&aMid!=null&&r.score>=aMid;
-    return `<div class="rk tap ${i<3?'top':''}" role="button" tabindex="0" data-act="swimmer" data-v="${esc(r.s.id)}"><span class="rk-n">${i+1}</span><span class="rk-who"><b>${esc((r.s.nick||r.s.first)+' '+r.s.last)}</b><span class="stat"><span>${r.s.group?'White '+esc(r.s.group):'No group'}</span><span>${r.n} event${r.n===1?'':'s'}</span><span>best: ${r.best.ev.dist} ${esc(STROKE_NAME[r.best.ev.stroke])} ${fmt(r.best.t)}</span></span>${up?'<span class="rk-up">Swimming like White A</span>':''}</span><span class="rk-s"><span class="rk-score">${Math.round(r.score)}</span>${r.cuts?`<span class="qcut">${r.cuts} cut${r.cuts===1?'':'s'}</span>`:''}</span></div>`; }).join('')}</div>`;
-  return h+'<p class="hint">Each best time is compared with the 10 &amp; under B qualifying time for that event (boys and girls each against their own). 100 means right at the B cut and higher is faster. A swimmer\'s score is the average over every event they have a time in, so boys, girls and every stroke can be ranked together. "Swimming like White A" marks White B swimmers scoring at or above the middle of White A.</p></section>'; }
+    return `<div class="rk tap ${i<3?'top':''}" role="button" tabindex="0" data-act="swimmer" data-v="${esc(r.s.id)}"><span class="rk-n">${i+1}</span><span class="rk-who"><b>${esc((r.s.nick||r.s.first)+' '+r.s.last)}</b><span class="stat"><span>${r.s.group?'White '+esc(r.s.group):'No group'}</span>${r.s.age!=null?`<span>age ${esc(r.s.age)}</span>`:''}<span>${r.n} event${r.n===1?'':'s'}</span><span>best: ${r.best.ev.dist} ${esc(STROKE_NAME[r.best.ev.stroke])} ${fmt(r.best.t)}</span></span>${up?'<span class="rk-up">Swimming like White A</span>':''}</span><span class="rk-s"><span class="rk-score">${Math.round(r.score)}</span>${r.cuts?`<span class="qcut">${r.cuts} cut${r.cuts===1?'':'s'}</span>`:''}</span></div>`; }).join('')}</div>`;
+  return h+'<p class="hint">Each best time is compared with the 10 &amp; under B qualifying time for that event (boys and girls each against their own). 100 means right at the B cut and higher is faster. A swimmer\'s score is the average over every event they have a time in, so boys, girls and every stroke can be ranked together. Since every swimmer is compared with the 10 &amp; under cuts, older swimmers have an edge, so use the age filter to compare kids against their own age group. "Swimming like White A" marks White B swimmers scoring at or above the middle of White A.</p></section>'; }
 /* every swimmer's best time in each event (tap a name) */
 function viewBest(){
   const g=UI.bestGrp||'all'; const q=norm(UI.bestQ||'');
@@ -2448,14 +2450,6 @@ function viewCuts(){
   let h=`<section class="stack"><div class="sec-h"><h2>Qualifying times</h2></div><div class="rfilter" role="group" aria-label="Gender">${[['F','Girls 10 & under'],['M','Boys 10 & under']].map(([x,t])=>`<button data-act="cut-g" data-v="${x}" aria-pressed="${g===x}">${t}</button>`).join('')}</div>`;
   if(!names.length) return h+`<div class="card empty"><p style="margin:0 0 10px">No 10 & under qualifying times loaded yet.</p><button class="btn primary" data-act="load-usa10">Load USA Swimming 10 & under times</button></div></section>`;
   h+=`<div class="card tbl-wrap"><table class="board cuttbl"><thead><tr><th>Event</th>${names.map(n=>`<th class="r">${n}</th>`).join('')}</tr></thead><tbody>${evs.map(([d,sk])=>{ const ev={dist:d,stroke:sk}; return `<tr><td><b>${d} ${esc(STROKE_NAME[sk])}</b></td>${names.map(n=>{ const x=st.find(s=>s.name===n&&s.dist===d&&s.stroke===sk); return `<td class="r">${x?fmt(x.time):'—'}</td>`; }).join('')}</tr>`; }).join('')}</tbody></table></div>`;
-  // swimmers with cuts
-  const kids=team().filter(s=>s.gender===g&&(s.age==null||s.age<=10));
-  const rows=[]; for(const s of kids){ const bt=bestTimesOf(s.id); const got=[];
-    for(const [d,sk] of evs){ const t=bt[TKEY(d,sk,'SCY')]; if(t==null) continue; const c=cutFor(s.id,{dist:d,stroke:sk},'SCY',t); if(c) got.push({ev:d+' '+STROKE_NAME[sk],c:c.name,t}); }
-    if(got.length) rows.push({s,got}); }
-  rows.sort((a,b)=>b.got.length-a.got.length||a.s.last.localeCompare(b.s.last));
-  h+=`<div class="sec-h" style="margin-top:6px"><h2>Who has cuts</h2><span class="small muted">${rows.length} swimmers</span></div>`;
-  h+=rows.length?`<div class="list">${rows.map(r=>`<div class="prow"><span><b>${esc((r.s.nick||r.s.first)+' '+r.s.last)}</b><span class="stat" style="flex-wrap:wrap">${r.got.map(x=>`<span>${esc(x.ev)} <b>${esc(x.c)}</b> ${fmt(x.t)}</span>`).join('')}</span></span></div>`).join('')}</div>`:`<p class="hint">No ${g==='F'?'girls':'boys'} 10 & under have made a cut yet, based on their best times in the app.</p>`;
   return h+`<p class="hint">USA Swimming 2024-2028 motivational times, short course yards. Best times come from times you've entered plus everything timed in the app (test sets don't count).</p></section>`;
 }
 function recBoardHTML(cats,b,fresh){ b=b||recordBoard(); fresh=fresh||Date.now()-7*864e5; let h='';
@@ -3266,6 +3260,7 @@ document.addEventListener('click',async ev=>{
     case 'best-grp': UI.bestGrp=v; render(); break;
     case 'rank-grp': UI.rankGrp=v; render(); break;
     case 'rank-sex': UI.rankSex=v; render(); break;
+    case 'rank-age': UI.rankAge=v; render(); break;
     case 'best-open': UI.bestOpen=UI.bestOpen===v?null:v; render(); break;
     case 'cut-g': UI.cutG=v; render(); break;
     case 'load-usa10': { const n=loadUsa10u(); render(); toast(n+' qualifying times loaded'); break; }
