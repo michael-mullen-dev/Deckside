@@ -650,6 +650,16 @@ details.fold>summary::after{content:'›';font-size:22px;color:var(--muted);tran
 .now-ours .tn-lanes span{background:rgba(255,255,255,.12);color:inherit}
 .now-ours .tn-go{width:100%}
 .mtools{margin-top:8px}
+body.welcoming header.top,body.welcoming .nav{display:none}
+.welcome{max-width:440px;margin:0 auto;padding:28px 0 40px;display:flex;flex-direction:column;gap:16px}
+.w-brand{font-family:var(--display);font-weight:800;font-size:44px;letter-spacing:.01em;text-transform:uppercase;line-height:1}
+.w-tag{margin:0;color:var(--muted);font-size:16px}
+.w-card{gap:12px}
+.w-card h2{margin:0;font-size:20px}
+.w-tabs{width:100%}.w-tabs button{flex:1}
+.w-card .btn.big{min-height:52px;font-size:17px;font-weight:800}
+.w-demo{min-height:48px}
+.w-fine{margin:0;text-align:center}
 .rr-ed{display:flex;gap:6px;flex-wrap:wrap;grid-column:1/-1;margin-top:4px}
 .tn-go{min-height:60px;font-size:19px;font-weight:800;padding:0 28px}
 @media (max-width:640px){ .tn-go{width:100%} }
@@ -1266,6 +1276,15 @@ function ref(key){ key=KP+key; return {
     return ()=>{ try{ supa.removeChannel(ch); }catch(e){} };
   }
 };}
+/* Deckside's own database: every coach signs in here. Each coach can only read and write their own rows (row level security). */
+const DECKSIDE_DB={url:'https://jlehvpntnnlphwvltoyo.supabase.co',key:'sb_publishable_KCa68cgyNEZjn_ka1MSkMw_qBQarVCN'};
+function supaConn(){ const c=supaCfg(); return c&&c.url&&c.key?c:DECKSIDE_DB; }
+const WELCOMED='deckside.welcomed';
+function hasSavedLogin(){ try{ return !!localStorage.getItem(LS+'.auth'); }catch(e){ return false; } }
+function welcomed(){ try{ return localStorage.getItem(WELCOMED)==='1'; }catch(e){ return false; } }
+function setWelcomed(){ try{ localStorage.setItem(WELCOMED,'1'); }catch(e){} }
+/* first open: sign up, sign in, or try the demo. Skipped for the TV board, signed-in devices, and anyone already using the app. */
+function needsWelcome(){ if(UI.kiosk) return false; if(UI.showWelcome) return true; if(sync.db||hasSavedLogin()||welcomed()) return false; return !(S.roster.length&&!S.demo); }
 async function supaClient(url,key){
   if(!window.supabase) await loadScript('vendor/supabase.js');
   return window.supabase.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,storageKey:LS+'.auth'}});
@@ -1396,12 +1415,13 @@ async function flush(){
   if(!failed&&sync.dirty.size) scheduleFlush();
 }
 async function initSync(){
-  const c=supaCfg(); if(!c||!c.url||!c.key) return;
+  const c=supaConn();
   try{
-    supa=supa||await supaClient(c.url,c.key);
+    if(!supa){ supa=await supaClient(c.url,c.key);
+      supa.auth.onAuthStateChange(ev=>{ if(ev==='PASSWORD_RECOVERY'){ UI.wMode='reset'; UI.showWelcome=true; render(); } }); }
     const {data}=await supa.auth.getSession(); const session=data&&data.session;
     if(!session){ sync.email=null; return; }
-    sync.db=supa; sync.uid=session.user.id; sync.email=session.user.email;
+    sync.db=supa; sync.uid=session.user.id; sync.email=session.user.email; sync.profile=session.user.user_metadata||{}; setWelcomed();
     render(); await pull();
   }catch(e){ if(sync.db) setSync('offline'); }
 }
@@ -1418,10 +1438,45 @@ async function sbAuth(mode){
     await initSync(); render(); toast('Signed in · sync is on');
   }catch(e){ toast("Couldn't reach Supabase. Check the URL and key, and that you're online."); }
 }
+function wv(id){ const el=$('#'+id); return el?(el.value||'').trim():''; }
+async function wAuth(mode){
+  const email=wv('w-email'), pw=($('#w-pw')||{}).value||'', name=wv('w-name'), team=wv('w-team');
+  if(mode!=='forgot'&&mode!=='reset'&&(!email||pw.length<6)){ toast('Enter your email and a password (6+ characters)'); return; }
+  if(mode==='up'&&!name){ toast('Add your name'); return; }
+  UI.wBusy=true; render();
+  try{
+    const c=supaConn(); supa=supa||await supaClient(c.url,c.key); const back=location.origin+location.pathname;
+    if(mode==='forgot'){ if(!email){ toast('Enter your email'); return; } const r=await supa.auth.resetPasswordForEmail(email,{redirectTo:back}); if(r.error){ toast(r.error.message); return; } UI.wNote='Check your email for a link to set a new password.'; return; }
+    if(mode==='reset'){ const np=($('#w-newpw')||{}).value||''; if(np.length<6){ toast('Use 6 or more characters'); return; } const r=await supa.auth.updateUser({password:np}); if(r.error){ toast(r.error.message); return; }
+      UI.showWelcome=false; UI.wMode=null; history.replaceState(null,'',back); await initSync(); toast('Password updated. You\'re signed in.'); return; }
+    const r=mode==='up'?await supa.auth.signUp({email,password:pw,options:{data:{name,team},emailRedirectTo:back}}):await supa.auth.signInWithPassword({email,password:pw});
+    if(r.error){ toast(/fetch|network/i.test(r.error.message)?"Couldn't connect. Check your internet and try again.":r.error.message); return; }
+    if(!r.data.session){ UI.wMode='in'; UI.wNote='Almost there. We sent a confirmation link to '+email+'. Tap it, then sign in here.'; return; }
+    UI.showWelcome=false; setWelcomed(); await initSync(); toast(mode==='up'?'Welcome to Deckside, '+name.split(' ')[0]+'!':'Signed in'); 
+  }catch(e){ toast("Couldn't connect. Check your internet and try again."); }
+  finally{ UI.wBusy=false; render(); }
+}
+async function saveProfile(){ if(!sync.db) return; const name=wv('p-name'), team=wv('p-team');
+  try{ const r=await supa.auth.updateUser({data:{name,team}}); if(r.error){ toast(r.error.message); return; } sync.profile={...(sync.profile||{}),name,team}; render(); toast('Profile saved'); }catch(e){ toast("Couldn't save. Check your internet."); } }
+const coachFirst=()=>((sync.profile&&sync.profile.name)||'').trim().split(' ')[0];
+function viewWelcome(){ const mode=UI.wMode||'up', busy=UI.wBusy?'disabled':'';
+  const f=(id,label,type,ac,ph)=>`<label class="f">${label}<input id="${id}" type="${type}" autocomplete="${ac}" ${ph?`placeholder="${esc(ph)}"`:''}></label>`;
+  let form='';
+  if(mode==='reset') form=`<h2>Set a new password</h2>${f('w-newpw','New password','password','new-password')}<button class="btn primary big" data-act="w-go" data-v="reset" ${busy}>Save password</button>`;
+  else if(mode==='forgot') form=`<h2>Reset your password</h2>${f('w-email','Email','email','username')}<button class="btn primary big" data-act="w-go" data-v="forgot" ${busy}>Email me a reset link</button><button class="btn ghost" data-act="w-mode" data-v="in">Back to sign in</button>`;
+  else form=`<div class="segs w-tabs" role="tablist"><button data-act="w-mode" data-v="up" aria-pressed="${mode==='up'}">Create account</button><button data-act="w-mode" data-v="in" aria-pressed="${mode==='in'}">Sign in</button></div>
+    ${mode==='up'?f('w-name','Your name','text','name','Coach Sam Rivera')+f('w-team','Team or club','text','organization','e.g. Riverside Swim Club'):''}
+    ${f('w-email','Email','email','username')}${f('w-pw','Password','password',mode==='up'?'new-password':'current-password',mode==='up'?'6 or more characters':'')}
+    <button class="btn primary big" data-act="w-go" data-v="${mode}" ${busy}>${UI.wBusy?'One sec…':mode==='up'?'Create account':'Sign in'}</button>
+    ${mode==='in'?'<button class="btn ghost" data-act="w-mode" data-v="forgot">Forgot password?</button>':''}`;
+  return `<section class="welcome"><div class="w-brand">Deckside</div><p class="w-tag">The swim meet and practice timer built by a coach, for coaches. Time heats, track best times, and keep team records, right from the pool deck.</p>
+    <div class="card stack w-card">${UI.wNote?`<div class="banner"><span>${esc(UI.wNote)}</span></div>`:''}${form}</div>
+    ${mode!=='reset'&&welcomed()?'<button class="btn ghost" data-act="w-close">Not now, back to the app</button>':''}
+    ${mode!=='reset'&&!welcomed()?`<button class="btn w-demo" data-act="w-demo">Try the demo first</button><p class="hint w-fine">Your account keeps your team safe and synced across your phone and the pool computer. Only you can see your swimmers.</p>`:''}</section>`; }
 async function sbSignOut(){
   try{ if(supa) await supa.auth.signOut(); }catch(e){}
   if(subs.core){ subs.core(); subs.core=null; } if(subs.meet){ subs.meet(); subs.meet=null; subs.meetId=null; }
-  sync.db=null; sync.uid=null; sync.email=null; sync.status='local'; render(); toast('Signed out. Data stays on this device.');
+  sync.db=null; sync.uid=null; sync.email=null; sync.profile=null; sync.status='local'; render(); toast('Signed out. Data stays on this device.');
 }
 /* fallback refresh for the display screen if live updates drop */
 setInterval(()=>{ if(sync.db&&document.visibilityState==='visible'&&UI.tab==='display'&&!subs.core) pull(); },20000);
@@ -1556,6 +1611,8 @@ function priorBest(swId,ev,course,excludeId,beforeAt,practice){
 
 /* ---------- rendering ---------- */
 function render(){ paintSpace();
+  const wel=needsWelcome(); document.body.classList.toggle('welcoming',wel);
+  if(wel){ $('#main').innerHTML=`<div class="view">${viewWelcome()}</div>`; return; }
   document.querySelectorAll('.nav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.v===UI.tab)));
   const m=M(); $('#meetname').textContent=m?(m.name||'Untitled meet'):'';
   paintSync();
@@ -1580,7 +1637,7 @@ function viewHome(){ const d=new Date(); const today=todayISO(); const here=attL
   const days=allMeetIds().map(id=>S.meets[id]).filter(x=>x&&x.practice&&!x.canceled&&!x.test&&x.heats&&x.heats.length).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,4);
   const upcoming=real.filter(x=>(x.date||'')>=today).sort((a,b)=>(a.date||'').localeCompare(b.date||''))[0];
   const hr=d.getHours(); const hi=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
-  let h=`<section class="home-hero"><div class="pd-l"><div class="eyebrow">${esc(d.toLocaleDateString([], {weekday:'long',month:'long',day:'numeric'}))}</div><div class="pd-title">${hi}, Coach</div>
+  let h=`<section class="home-hero"><div class="pd-l"><div class="eyebrow">${esc(d.toLocaleDateString([], {weekday:'long',month:'long',day:'numeric'}))}</div><div class="pd-title">${hi}, Coach${coachFirst()?' '+esc(coachFirst()):''}</div>${sync.db&&!coachFirst()?'<button class="btn sm" data-act="open-profile" style="align-self:flex-start;margin-top:6px">Add your name and team</button>':''}
     <div class="pd-stats"><span><b>${here}</b> here today</span><span><b>${g.pct}%</b> toward the ${g.target}% goal</span>${upcoming?`<span class="pd-saved">Next meet: ${esc(upcoming.name||'Meet')} · ${esc(new Date(upcoming.date+'T12:00:00').toLocaleDateString([], {weekday:'short',month:'short',day:'numeric'}))}</span>`:''}</div></div>
     <div class="home-acts"><button class="btn primary" data-act="quick">Practice timer</button><button class="btn" data-act="sheet" data-v="import">Load heat sheet</button><button class="btn" data-act="open-results">Load results</button></div></section>`;
   h+=`<div class="home-grid">`;
@@ -2676,16 +2733,14 @@ function viewSetup(m){
   x='';{ let h='';   const cfg=supaCfg()||{};
   h+=`<div class="stack">
     <p class="hint" style="margin:0">Everything saves on this device first and works with no signal. Sign in to sync so your phone and the computer board share times, and so nothing is lost if a device is wiped.</p>
-    ${sync.db?`<div class="row" style="justify-content:space-between"><span><b>Sync is on</b><br><span class="small muted">${esc(sync.email||'')}</span></span><button class="btn" data-act="sb-signout">Sign out</button></div>`:`
-    <details ${cfg.url?'open':''}><summary class="small" style="cursor:pointer;font-weight:600">Turn on sync</summary><div class="stack" style="margin-top:10px">
-      <div class="grid2"><label class="f">Supabase project URL<input id="sb-url" autocomplete="off" spellcheck="false" placeholder="https://xxxx.supabase.co" value="${esc(cfg.url||'')}"></label>
-      <label class="f">Supabase anon key<input id="sb-key" autocomplete="off" spellcheck="false" placeholder="eyJ…" value="${esc(cfg.key||'')}"></label>
-      <label class="f">Email<input id="sb-email" type="email" autocomplete="username" value=""></label>
-      <label class="f">Password<input id="sb-pw" type="password" autocomplete="current-password"></label></div>
-      <div class="row"><button class="btn primary" data-act="sb-in">Sign in</button><button class="btn" data-act="sb-up">Create account</button></div>
-      <p class="hint" style="margin:0">Use the same email and password on your phone and the computer.</p></div></details>`}
+    ${sync.db?`<div class="stack"><div class="row" style="justify-content:space-between"><span><b>Signed in · synced</b><br><span class="small muted">${esc(sync.email||'')}</span></span><button class="btn" data-act="sb-signout">Sign out</button></div>
+      <div class="grid2"><label class="f">Your name<input id="p-name" autocomplete="name" value="${esc((sync.profile&&sync.profile.name)||'')}" placeholder="Coach Sam Rivera"></label>
+      <label class="f">Team or club<input id="p-team" autocomplete="organization" value="${esc((sync.profile&&sync.profile.team)||'')}" placeholder="e.g. Riverside Swim Club"></label></div>
+      <div class="row"><button class="btn primary" data-act="prof-save">Save profile</button></div></div>`:`
+    <div class="row"><button class="btn primary" data-act="open-welcome" data-v="in">Sign in</button><button class="btn" data-act="open-welcome" data-v="up">Create account</button></div>
+    <p class="hint" style="margin:0">Use the same account on your phone and the pool computer.</p>`}
     <div class="backup-box"><div><b>Backup</b><span class="small muted">${S.lastBackup?'Last downloaded '+esc(new Date(S.lastBackup).toLocaleDateString([], {month:'short',day:'numeric'})):'Keep a copy of everything on this device'}</span></div><div class="row"><button class="btn primary" data-act="dl-backup">Download backup</button><button class="btn" data-act="sheet" data-v="restore">Restore</button><button class="btn ghost" data-act="copy-backup">Copy as text</button></div></div></div>`;
- x=h; } h+=fold('sync','Saving &amp; sync',sync.db?'On · synced'+agoText(sync.lastOk):'Off',x);
+ x=h; } h+=fold('sync','Account &amp; sync',sync.db?((sync.profile&&sync.profile.name)||sync.email||'Signed in')+' · synced'+agoText(sync.lastOk):'Not signed in',x);
   if(loaded&&UI.qsHidden&&!UI.qsOpen) h+=`<div class="row" style="justify-content:center"><button class="btn sm ghost" data-act="qs-fold" data-v="1">Show quick setup</button></div>`;
   return h;
 }
@@ -3264,6 +3319,13 @@ document.addEventListener('click',async ev=>{
     case 'sb-in': sbAuth('in'); break;
     case 'sb-up': sbAuth('up'); break;
     case 'sb-signout': sbSignOut(); break;
+    case 'w-mode': UI.wMode=v; UI.wNote=null; render(); break;
+    case 'w-go': wAuth(v); break;
+    case 'w-demo': UI.showWelcome=false; UI.wMode=null; setWelcomed(); UI.tab='meet'; render(); break;
+    case 'open-welcome': UI.showWelcome=true; UI.wMode=v||'in'; UI.wNote=null; render(); break;
+    case 'w-close': UI.showWelcome=false; UI.wMode=null; render(); break;
+    case 'prof-save': saveProfile(); break;
+    case 'open-profile': UI.tab='setup'; UI.secOpen.sync=true; render(); setTimeout(()=>{ const el=document.querySelector('details[data-sec=sync]'); if(el) el.scrollIntoView({block:'start'}); const i=$('#p-name'); if(i) i.focus(); },30); break;
     case 'save-std': saveStandards(); break;
     case 'save-times': importTimes(); break;
     case 'rec-import': importRecords(); break;
@@ -3799,7 +3861,8 @@ if('serviceWorker' in navigator){ window.addEventListener('load',()=>{ navigator
 }
 function appReload(){ try{ sessionStorage.setItem('deckside.tab',UI.tab); }catch(e){} location.reload(); }
 if(navigator.storage&&navigator.storage.persist){ navigator.storage.persist().catch(()=>{}); }
-window.addEventListener('online',()=>{ if(!sync.db&&supaCfg()) initSync(); });
+window.addEventListener('online',()=>{ if(!sync.db&&hasSavedLogin()) initSync(); });
+if(/type=recovery/.test(location.hash)){ UI.wMode='reset'; UI.showWelcome=true; }
 setInterval(()=>{ if(!UI.sheet&&UI.tab==='meet'&&document.visibilityState==='visible'&&!document.activeElement.closest?.('input,textarea,select')) render(); },30000);
 </script>
 
