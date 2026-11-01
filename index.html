@@ -650,6 +650,7 @@ details.fold>summary::after{content:'›';font-size:22px;color:var(--muted);tran
 .now-ours .tn-lanes span{background:rgba(255,255,255,.12);color:inherit}
 .now-ours .tn-go{width:100%}
 .mtools{margin-top:8px}
+.rr-ed{display:flex;gap:6px;flex-wrap:wrap;grid-column:1/-1;margin-top:4px}
 .tn-go{min-height:60px;font-size:19px;font-weight:800;padding:0 28px}
 @media (max-width:640px){ .tn-go{width:100%} }
 .miss{border:2px solid var(--blocks)}
@@ -978,7 +979,8 @@ const NICKS={isabella:['izzy','izzie','bella','isa'],isabelle:['izzy','izzie','b
 function buildMatchers(roster){
   return roster.map(sw=>{
     const last=norm(sw.last); const base=[sw.first,sw.nick].filter(Boolean).map(norm);
-    const firsts=[...new Set([...base,...base.flatMap(f=>NICKS[f.split(' ')[0]]||[])])];
+    const fulls=f=>Object.keys(NICKS).filter(full=>NICKS[full].includes(f.split(' ')[0]));
+    const firsts=[...new Set([...base,...base.flatMap(f=>NICKS[f.split(' ')[0]]||[]),...base.flatMap(fulls)])];
     const pats=[];
     for(const f of firsts){
       pats.push(new RegExp('(^|[^a-z])'+reEsc(last)+'\\s*,\\s*'+reEsc(f)+'(?=[^a-z]|$)'));
@@ -2481,11 +2483,14 @@ function viewCuts(){
   h+=`<div class="card tbl-wrap"><table class="board cuttbl"><thead><tr><th>Event</th>${names.map(n=>`<th class="r">${n}</th>`).join('')}</tr></thead><tbody>${evs.map(([d,sk])=>{ const ev={dist:d,stroke:sk}; return `<tr><td><b>${d} ${esc(STROKE_NAME[sk])}</b></td>${names.map(n=>{ const x=st.find(s=>s.name===n&&s.dist===d&&s.stroke===sk); return `<td class="r">${x?fmt(x.time):'—'}</td>`; }).join('')}</tr>`; }).join('')}</tbody></table></div>`;
   return h+`<p class="hint">USA Swimming 2024-2028 motivational times, short course yards. Best times come from times you've entered plus everything timed in the app (test sets don't count).</p></section>`;
 }
-function recBoardHTML(cats,b,fresh){ b=b||recordBoard(); fresh=fresh||Date.now()-7*864e5; let h='';
+function recEditBtns(r,kind){ if(!UI.recEdit) return '';
+  const key=r.base?'base|'+r.grp+r.g+'|'+r.ev+'|'+kind:'swim|'+r.mid+'|'+r.eid;
+  return `<span class="rr-ed">${r.base?`<button class="btn sm" data-act="rec-move" data-v="${esc(key)}">Move to ${kind==='meet'?'practice':'meet'}</button>`:''}<button class="btn sm danger ${UI.armed==='rec-del|'+key?'armed':''}" data-act="rec-del" data-v="${esc(key)}">${UI.armed==='rec-del|'+key?'Tap again':'Remove'}</button></span>`; }
+function recBoardHTML(cats,b,fresh,kind){ kind=kind||'meet'; b=b||recordBoard(kind); fresh=fresh||Date.now()-7*864e5; let h='';
   h+=`<div class="rboard c${cats.length}">${cats.map(([g,sx,nm])=>{ const rows=REC_EVENTS.map(([k,en])=>[k,en,b[g+sx+'|'+k]]); const set=rows.filter(x=>x[2]), open=rows.filter(x=>!x[2]);
     return `<section class="rcol ${sx==='F'?'girls':'boys'}"><header><span class="rcol-t">${esc(nm)}</span><span class="rcol-n">${set.length}<small>/${rows.length}</small></span></header>
       <div class="rrows">${set.map(([k,en,r])=>{ const isNew=!r.base&&r.at&&r.at>fresh; const yr=r.date?String(r.date).slice(0,4):'';
-        return `<div class="rrow ${isNew?'new':''}"><span class="rr-ev">${esc(en)}</span><span class="rr-who"><b>${esc(r.name)}</b><small>${esc(recDate(r.date))}${isNew?' · <em>NEW</em>':''}</small></span><span class="rr-t">${fmt(r.time)}</span></div>`; }).join('')||'<p class="rr-none">No records yet</p>'}</div>
+        return `<div class="rrow ${isNew?'new':''}"><span class="rr-ev">${esc(en)}</span><span class="rr-who"><b>${esc(r.name)}</b><small>${esc(recDate(r.date))}${isNew?' · <em>NEW</em>':''}</small></span><span class="rr-t">${fmt(r.time)}</span>${recEditBtns(r,kind)}</div>`; }).join('')||'<p class="rr-none">No records yet</p>'}</div>
       ${open.length?`<div class="ropen"><span class="ropen-l">Up for grabs</span><span class="ropen-c">${open.map(([k,en])=>`<span>${esc(en)}</span>`).join('')}</span></div>`:''}</section>`; }).join('')}</div>`;
   return h; }
 function recNav(){ const cur=UI.recTab||'rec';
@@ -2503,12 +2508,12 @@ function viewRecords(){
   const recent=all.filter(r=>!r.base).sort((x,y)=>(y.at||0)-(x.at||0));
   let h=top+`<section class="rec-hero"><div class="pd-l"><div class="eyebrow">${esc(SPACE.name)}</div><div class="pd-title">${rk==='meet'?'Meet records':'Practice records'}</div>
     <div class="pd-stats"><span><b>${setN}</b> of ${totN} set</span><span><b>${recent.length}</b> broken this season</span>${recent[0]?`<span class="pd-saved">Latest: ${esc(recent[0].name)} · ${esc(recEvName(recent[0].ev))} ${fmt(recent[0].time)}</span>`:''}</div></div>
-    <div class="pd-acts">${rk==='meet'?'<button class="btn" data-act="go-records">Edit records</button>':''}</div></section>`;
+    <div class="pd-acts"><button class="btn ${UI.recEdit?'primary':''}" data-act="rec-edit">${UI.recEdit?'Done':'Edit'}</button></div></section>`;
   h+=recConfirmHTML(pendingRecords());
   h+=`<div class="rfilter" role="group" aria-label="Which records">${[['meet','Meet records'],['practice','Practice records']].map(([x,t])=>`<button data-act="rec-kind" data-v="${x}" aria-pressed="${rk===x}">${t}</button>`).join('')}</div>`;
-  h+=`<p class="hint" style="margin:0">${rk==='practice'?'Fastest confirmed times from practices and race days. Meet times never count here.':'Official times only. Load the results after a meet and new records go up on their own. Your watch times never count here.'}</p>`;
+  h+=`<p class="hint" style="margin:0">${UI.recEdit?'Tap Remove to take a record off (the next fastest takes its place), or move a record you typed in to the other board.':rk==='practice'?'Fastest times from practices and race days go up on their own. Meet times never count here.':'Official times only. Load the results after a meet and new records go up on their own. Your watch times never count here.'}</p>`;
   h+=`<div class="rfilter">${[['all','All groups'],['A','White A'],['B','White B']].map(([x,t])=>`<button data-act="rec-view" data-v="${x}" aria-pressed="${v===x}">${t}</button>`).join('')}</div>`;
-  h+=recBoardHTML(cats,b,fresh);
+  h+=recBoardHTML(cats,b,fresh,rk);
   h+=`<section class="stack"><div class="sec-h"><h2>Broken this season</h2><span class="small muted">${recent.length}</span></div>`;
   h+=recent.length?`<div class="rbroke">${recent.map(r=>`<div class="rb1"><div class="rb-top"><span class="rb-t">${fmt(r.time)}</span><span class="rb-cat">${esc(recCatName(r.grp,r.g))} · ${esc(recEvName(r.ev))}</span></div><b class="rb-n">${esc(r.name)}</b><span class="small muted">${esc(recDate(r.date))}${r.was?' · was '+fmt(r.was.time)+' ('+esc(r.was.name)+')':' · first record'}</span><button class="btn sm ghost ${UI.armed==='unrec-'+r.eid?'armed':''}" data-act="rec-undo" data-v="${esc(r.mid+'|'+r.eid)}">${UI.armed==='unrec-'+r.eid?'Tap again to remove':'Not a record'}</button></div>`).join('')}</div>`:`<div class="card empty"><p style="margin:0">No records broken in the app yet. When someone breaks one at practice, you confirm it and it shows up here.</p></div>`;
   return h+'</section>';
@@ -3294,6 +3299,13 @@ document.addEventListener('click',async ev=>{
     case 'rank-sex': UI.rankSex=v; render(); break;
     case 'rank-age': UI.rankAge=v; render(); break;
     case 'rec-kind': UI.recKind=v; render(); break;
+    case 'rec-edit': UI.recEdit=!UI.recEdit; UI.armed=null; render(); break;
+    case 'rec-move': { const [,gk,ev,kind]=v.split('|'); const r=(S.records||[]).find(x=>(x.grp+x.g)===gk&&x.ev===ev&&(x.kind||'meet')===kind);
+      if(r){ const to=kind==='meet'?'practice':'meet'; r.kind=to; save('core'); toast('Moved to '+to+' records'); } render(); break; }
+    case 'rec-del': { if(UI.armed!=='rec-del|'+v){ UI.armed='rec-del|'+v; render(); break; } UI.armed=null; const p=v.split('|');
+      if(p[0]==='base'){ const [,gk,ev,kind]=p; S.records=(S.records||[]).filter(x=>!((x.grp+x.g)===gk&&x.ev===ev&&(x.kind||'meet')===kind)); save('core'); }
+      else { const mm=S.meets[p[1]]; const sw=mm&&mm.swims&&mm.swims[p[2]]; if(sw){ sw.rec='no'; save(mm.id); } }
+      toast('Record removed'); render(); break; }
     case 'best-open': UI.bestOpen=UI.bestOpen===v?null:v; render(); break;
     case 'cut-g': UI.cutG=v; render(); break;
     case 'load-usa10': { const n=loadUsa10u(); render(); toast(n+' qualifying times loaded'); break; }
@@ -3513,15 +3525,15 @@ function recordSwims(kind){
 /* two boards: meet records (official meets + the records you entered) and practice records (practices and race days) */
 function recordBoard(kind){ kind=kind||'meet';
   const out={};
-  for(const r of (kind==='meet'?S.records:S.precords)||[]){ if(!r.name||r.time==null) continue; const k=r.grp+r.g+'|'+r.ev; if(!out[k]||r.time<out[k].time) out[k]={...r,base:true}; }
+  for(const r of (S.records||[]).filter(r=>(r.kind||'meet')===kind)){ if(!r.name||r.time==null) continue; const k=r.grp+r.g+'|'+r.ev; if(!out[k]||r.time<out[k].time) out[k]={...r,base:true}; }
   const base={...out};
-  // official meet results go straight onto the board; practice records wait for the coach to confirm
-  for(const x of recordSwims(kind)){ if(x.auto?x.sw.rec==='no':x.sw.rec!=='yes') continue;
+  // every swim counts on its own board; a record you remove (rec 'no') stays off
+  for(const x of recordSwims(kind)){ if(x.sw.rec==='no') continue;
     if(!out[x.k]||x.t<out[x.k].time) out[x.k]={grp:x.grp,g:x.g,ev:x.ev,time:x.t,name:(x.sm.nick||x.sm.first)+' '+x.sm.last.charAt(0)+'.',date:x.m.date,at:x.sw.at,mid:x.m.id,eid:x.e.id,base:false,was:base[x.k]||null}; }
   return out;
 }
 /* swims fast enough to break a record that the coach hasn't confirmed or turned down yet */
-function pendingRecords(){
+function pendingRecords(){ return [];
   const best={};
   for(const kind of ['practice']){ const b=recordBoard(kind);
     for(const x of recordSwims(kind)){ if(x.sw.rec) continue; const cur=b[x.k]; if(cur&&x.t>=cur.time) continue; const bk=kind+'|'+x.k;
