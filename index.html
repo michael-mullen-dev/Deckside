@@ -2307,7 +2307,7 @@ function testSetsNote(){ let sets=0; const days=[];
     for(const hh of m.heats){ if(!(m.test||hh.test)) continue; if(m.entries.some(e=>e.hk===hh.k&&m.swims&&m.swims[e.id]&&m.swims[e.id].time!=null)) n++; }
     if(n){ sets+=n; days.push(m); } }
   if(!sets) return '';
-  return `<div class="banner"><span><b>${sets} set${sets===1?'':'s'} on ${days.length} day${days.length===1?'':'s'} ${sets===1?'was':'were'} timed as a test</b> and ${sets===1?'isn\'t':'aren\'t'} counted here. If ${sets===1?'it was':'they were'} real, open the day and tap Count them.</span>${days.length===1?`<button class="btn sm" data-act="pick-meet" data-v="${esc(days[0].id)}">Open that day</button>`:'<button class="btn sm" data-act="open-tests">See them</button>'}</div>`; }
+  return `<div class="banner"><span><b>${sets} set${sets===1?'':'s'} on ${days.length} day${days.length===1?'':'s'} ${sets===1?'was':'were'} timed as a test</b> and ${sets===1?'isn\'t':'aren\'t'} counted here. If ${sets===1?'it was':'they were'} real, open the day and tap Count them.</span><button class="btn sm" data-act="pick-meet" data-v="${esc(days[0].id)}">${days.length===1?'Open that day':'Open the latest'}</button></div>`; }
 /* a record name like "Sam S" or "Jordan" -> the one roster swimmer it clearly means, else null */
 function recHolder(name,g){ const t=norm(name||'').split(/\s+/).filter(Boolean); if(!t.length) return null;
   const hits=S.roster.filter(s=>(!g||s.gender===g)&&[s.first,s.nick].filter(Boolean).some(f=>norm(f).split(/\s+/)[0]===t[0])&&(!t[1]||norm(s.last).startsWith(t[1].replace(/\./g,''))));
@@ -2553,13 +2553,14 @@ function setupText(){
   const rec=[...(S.records||[])].filter(r=>r.name&&r.time!=null).map(r=>`${r.g==='F'?'Girls':'Boys'} ${r.grp}, ${recEvName(r.ev).replace('50 ','50 ')}, ${r.name}, ${fmt(r.time)}${r.date?', '+r.date:''}`);
   return ['# Roster',...ros,'','# Best times',timesText(),'','# Records',...rec].join('\n');
 }
-function meetBuckets(){ const B={real:[],day:[],test:[]};
+function meetBuckets(){ const B={real:[],race:[],prac:[]};
   for(const x of Object.values(S.meets||{})){ if(!x||!x.heats) continue;
     const timed=x.heats.filter(h=>(x.timers&&x.timers[h.k]&&x.timers[h.k].t0)||x.entries.some(e=>e.hk===h.k&&x.swims&&x.swims[e.id]&&x.swims[e.id].time!=null));
-    const isTest=x.test||x.canceled||(timed.length&&timed.every(h=>h.test));
-    (isTest?B.test:x.practice?B.day:B.real).push(x); }
+    // test mode runs aren't listed; canceled days stay in their own tab, tagged canceled
+    if(x.test||(timed.length&&timed.every(h=>h.test))) continue;
+    (x.practice?(x.plan?B.race:B.prac):B.real).push(x); }
   const by=(a,b)=>(b.date||'').localeCompare(a.date||'')||(a.grp||'').localeCompare(b.grp||'');
-  B.real.sort(by); B.day.sort(by); B.test.sort(by); return B; }
+  B.real.sort(by); B.race.sort(by); B.prac.sort(by); return B; }
 function storeRow(x){ const n=Object.values(x.swims||{}).filter(w=>w&&w.time!=null).length; const d=new Date((x.date||todayISO())+'T12:00:00');
   const mon=d.toLocaleDateString([], {month:'short'}).toUpperCase(), day=d.getDate(), yr=d.getFullYear();
   const title=x.practice?(d.toLocaleDateString([], {weekday:'long'})+(x.grp?' · White '+x.grp:'')):(x.name||'Untitled meet');
@@ -2610,12 +2611,12 @@ function viewSetup(m){
       <textarea id="rec-text" rows="6" spellcheck="false" placeholder="Girls A, 50 Back, Emma R, 45.02"></textarea>
       <button class="btn primary" data-act="rec-import">Save records</button></div></details></div>`;
  x=h; } h+=fold('recs','Records',(S.records||[]).length+' records',x);
-  x='';{ let h='';   const B=meetBuckets(), cat=UI.storeCat||'real', list=B[cat];
-  const LAB={real:['Real meets','🏁'],day:['Meet days','⏱'],test:['Tests','🧪']};
-  h+=`<div class="stack store"><div class="store-tabs" role="tablist">${['real','day','test'].map(k=>`<button role="tab" data-act="store-cat" data-v="${k}" aria-pressed="${cat===k}"><span class="st-n">${B[k].length}</span><span class="st-l">${LAB[k][0]}</span></button>`).join('')}</div>`;
-  h+=`<p class="hint" style="margin:0">${cat==='real'?'Official meets loaded from a heat sheet. These times count as official best times and cuts.':cat==='day'?'Practice meet days and timed practice sets. Times count toward drops and practice bests, not official times.':'Test runs and canceled days. Nothing in here counts toward best times, drops or records.'}</p>`;
+  x='';{ let h='';   const B=meetBuckets(), cat=B[UI.storeCat]?UI.storeCat:'real', list=B[cat];
+  const LAB={real:['Meets','🏁'],race:['Race days','🏊'],prac:['Practices','⏱']};
+  h+=`<div class="stack store"><div class="store-tabs" role="tablist">${['real','race','prac'].map(k=>`<button role="tab" data-act="store-cat" data-v="${k}" aria-pressed="${cat===k}"><span class="st-n">${B[k].length}</span><span class="st-l">${LAB[k][0]}</span></button>`).join('')}</div>`;
+  h+=`<p class="hint" style="margin:0">${cat==='real'?'Official meets loaded from a heat sheet. These times count as official best times and cuts.':cat==='race'?'Practice race days with a heat plan. Times count toward drops and practice bests, not official times.':'Timed sets from regular practices. Times count toward drops and practice bests, not official times.'}</p>`;
   if(cat==='real') h+=`<div class="row" style="gap:8px"><button class="btn primary" data-act="sheet" data-v="import" style="min-height:48px;flex:1">Load heat sheet</button><button class="btn" data-act="open-results" style="min-height:48px">Load results</button>${sync.db?'<button class="btn" data-act="sync-now" style="min-height:48px">Sync now</button>':''}</div>`;
-  h+=list.length?`<div class="store-list">${list.map(storeRow).join('')}</div>`:`<div class="store-empty"><b>${cat==='real'?'No meets yet':cat==='day'?'No meet days yet':'No tests'}</b><span class="small muted">${cat==='real'?'Load a Hy-Tek heat sheet or psych sheet PDF.':cat==='day'?'Race days and practice sets you time show up here.':'Anything marked as a test or canceled lands here.'}</span></div>`;
+  h+=list.length?`<div class="store-list">${list.map(storeRow).join('')}</div>`:`<div class="store-empty"><b>${cat==='real'?'No meets yet':cat==='race'?'No race days yet':'No practices yet'}</b><span class="small muted">${cat==='real'?'Load a Hy-Tek heat sheet or psych sheet PDF.':cat==='race'?'Practice race days you run show up here.':'Practice sets you time show up here.'}</span></div>`;
   h+='</div>';
   if(m&&!m.practice&&cat==='real'&&B.real.includes(m)){
     h+=`<section class="card stack"><div class="eyebrow">This meet</div>
@@ -2630,7 +2631,7 @@ function viewSetup(m){
       <p class="hint">${m.events.length} events · ${m.heats.length} heats · ${m.entries.length} of your swims${m.heats.some(x=>x.est)?' · heats estimated from a psych sheet':''}.</p>
       <div class="row"><button class="btn" data-act="rematch">Re-match roster</button><button class="btn" data-act="sheet" data-v="add-entry">Add a swim by hand</button><button class="btn danger ${UI.armed==='del-meet'?'armed':''}" data-act="del-meet">${UI.armed==='del-meet'?'Tap again to delete':'Delete meet'}</button></div></section>`;
   }
- x=h; } h+=fold('meets','Saved meets',(()=>{const B=meetBuckets();const pl=(n,w)=>n+' '+w+(n===1?'':'s'); return pl(B.real.length,'meet')+' · '+pl(B.day.length,'meet day')+' · '+pl(B.test.length,'test');})(),x);
+ x=h; } h+=fold('meets','Saved meets',(()=>{const B=meetBuckets();const pl=(n,w)=>n+' '+w+(n===1?'':'s'); return pl(B.real.length,'meet')+' · '+pl(B.race.length,'race day')+' · '+pl(B.prac.length,'practice');})(),x);
   x='';{ let h=''; const names=[...new Set(S.standards.map(s=>s.name))];   h+=`<div class="stack">
     ${names.length?`<div class="tags">${names.map(n=>`<span class="chip later">${esc(n)} · ${S.standards.filter(s=>s.name===n).length}</span>`).join('')}</div>`:''}
     <p class="hint">Paste one cut per line: standard, gender, age group, event, time. For example <span class="code">AG Champs, Girls, 11-12, 100 Free SCY, 1:05.29</span>. Spreadsheet columns paste in fine too.</p>
