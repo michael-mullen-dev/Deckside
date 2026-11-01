@@ -642,6 +642,14 @@ details.fold>summary::after{content:'›';font-size:22px;color:var(--muted);tran
 .tn-code{font-family:var(--display);font-weight:800;font-size:28px;line-height:1.05;text-transform:uppercase}
 .tn-sub{color:var(--muted);font-weight:600}
 .tn-lanes{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.tn-lanes span{background:var(--surface2);border-radius:99px;padding:4px 10px;font-size:14px}
+.mhead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:2px 0 4px}
+.mh-l{min-width:0}
+.mh-name{font-family:var(--display);font-weight:800;font-size:26px;line-height:1.05;text-transform:uppercase;overflow-wrap:anywhere}
+.mh-acts{display:flex;gap:6px}
+.now-ours{display:flex;flex-direction:column;gap:10px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15)}
+.now-ours .tn-lanes span{background:rgba(255,255,255,.12);color:inherit}
+.now-ours .tn-go{width:100%}
+.mtools{margin-top:8px}
 .tn-go{min-height:60px;font-size:19px;font-weight:800;padding:0 28px}
 @media (max-width:640px){ .tn-go{width:100%} }
 .miss{border:2px solid var(--blocks)}
@@ -1158,7 +1166,7 @@ const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 function blank(){ return {v:1,records:[],attendance:{},roster:[],standards:[],meets:{},meetOrder:[],active:null,tags:TAGS_DEFAULT.slice(),coreAt:0,deleted:[],demo:false}; }
 let S=null, localOK=true;
 const APP_V='79';   // keep in step with sw.js CACHE
-const UI={secOpen:{},tab:'meet',sheet:null,hideDone:false,draft:null,armed:null};
+const UI={secOpen:{},tab:'meet',sheet:null,hideDone:true,draft:null,armed:null};
 UI.quickStop=true;
 try{ UI.kiosk=localStorage.getItem(LS+'.kiosk')==='1'; }catch(e){}
 try{ UI.hideSetup=localStorage.getItem(LS+'.hideSetup')==='1'; }catch(e){}
@@ -1170,7 +1178,7 @@ try{ UI.dispMode=localStorage.getItem(LS+'.dmode')||'times'; }catch(e){}
 try{ UI.grp=localStorage.getItem(DK+'.grp')||'all'; }catch(e){ UI.grp='all'; }
 try{ const q0=localStorage.getItem(DK+'.qs'); if(q0!=null) UI.quickStop=q0==='1'; }catch(e){}
 try{ UI.qsHidden=localStorage.getItem(DK+'.qsHide')==='1'; UI.secOpen=JSON.parse(localStorage.getItem(LS+'.secOpen')||'{}')||{}; }catch(e){}
-try{ UI.tab=localStorage.getItem(LS+'.tab')||'meet'; if(UI.tab==='swimmers') UI.tab='records'; UI.hideDone=localStorage.getItem(LS+'.hide')==='1'; }catch(e){}
+try{ UI.tab=localStorage.getItem(LS+'.tab')||'meet'; if(UI.tab==='swimmers') UI.tab='records'; UI.hideDone=localStorage.getItem(LS+'.hide')!=='0'; }catch(e){}
 
 function loadLocal(){
   try{ const r=localStorage.getItem(DK); if(r){ S=Object.assign(blank(),JSON.parse(r)); return true; } }catch(e){ localOK=false; }
@@ -1588,13 +1596,21 @@ function viewMeet(m){
   if(m.finished) return finishedMeetView(m);
   const idx=heatIndex(m), est=estimates(m);
   const ents=m.entries.filter(e=>idx[e.hk]!=null).sort((a,b)=>idx[a.hk]-idx[b.hk]||(a.lane||0)-(b.lane||0));
-  let h=closeBar(m)+`<div class="topact mtop"><button class="btn sm" data-act="sheet" data-v="board">Board screen</button><button class="btn sm" data-act="open-results">Load results</button><button class="btn sm" data-act="quick">Practice timer</button></div>`;
+  const nTimed=ents.filter(e=>status(m,idx,est,e).st==='done').length;
+  const mdate=new Date((m.date||todayISO())+'T12:00:00').toLocaleDateString([], {weekday:'short',month:'short',day:'numeric'});
+  let h=`<section class="mhead"><div class="mh-l"><div class="eyebrow">${esc(mdate)} · ${nTimed} of ${ents.length} swims timed</div><div class="mh-name">${esc(m.name||'Meet')}</div></div><div class="mh-acts"><button class="btn sm primary" data-act="finish-meet" data-v="1">Finish meet</button><button class="btn sm" data-act="close-day">Close</button></div></section>`;
+  // the next heat with our swimmers (shown inside the pool clock when it's the heat in the water)
+  const nextE=ents.find(e=>{ const st=status(m,idx,est,e).st; return st!=='done'&&st!=='past'&&!(m.timers&&m.timers[e.hk]&&m.timers[e.hk].done); });
+  const nextRun=nextE&&m.timers&&m.timers[nextE.hk]&&m.timers[nextE.hk].t0&&!m.timers[nextE.hk].done;
+  const ourLanes=nextE?ents.filter(x=>x.hk===nextE.hk&&status(m,idx,est,x).st!=='done').map(x=>`<span><b>${x.lane!=null?'L'+x.lane:'L?'}</b> ${esc(x.relay?'Relay':shortName(x.swimmers[0]))}</span>`).join(''):'';
+  let mergedNext=false;
   // pool clock
   const ni=m.now&&idx[m.now.k]!=null?idx[m.now.k]:null;
   if(ni!=null){
     const hh=m.heats[ni], ev=m.events[hh.ev];
     h+=`<section class="now" aria-label="Pool clock"><div class="now-top"><span class="eyebrow">In the water now · set ${clock(m.now.at)}</span><button class="btn sm now-undo" data-act="now-clear">Not started yet</button></div>
       <div class="now-main"><div><div class="now-code">E${esc(ev.num)} · H${hh.heat}${hh.of?'/'+hh.of:''}</div><div class="now-sub">${esc(ev.title)}</div></div></div>
+      ${nextE&&nextE.hk===m.now.k?(mergedNext=true,`<div class="now-ours"><div class="tn-lanes">${ourLanes}</div><button class="btn primary tn-go" data-act="timer" data-v="${esc(nextE.hk)}">${nextRun?'Back to timer':'Time this heat'}</button></div>`):''}
       <div class="now-ctrl"><button class="btn" data-act="now-step" data-v="-1" aria-label="Previous heat">‹</button><button class="btn primary" data-act="now-step" data-v="1">Next heat is up ›</button><button class="btn" data-act="sheet" data-v="pick">Jump</button></div></section>`;
   } else {
     h+=`<section class="now" aria-label="Pool clock"><div class="eyebrow">Pool clock</div>
@@ -1605,21 +1621,16 @@ function viewMeet(m){
   for(const k in (m.timers||{})){ const T=m.timers[k]; if(T.t0&&!T.done){ const hh=m.heats[idx[k]]; if(!hh) continue; const ev=m.events[hh.ev];
     h+=`<div class="banner"><span><b>Timer running</b> · E${esc(ev.num)} H${hh.heat}</span><button class="btn sm" data-act="timer" data-v="${esc(k)}">Open timer</button></div>`; } }
   // the next heat with our swimmers: one big button to time it
-  { const nextE=ents.find(e=>{ const st=status(m,idx,est,e).st; return st!=='done'&&st!=='past'&&!(m.timers&&m.timers[e.hk]&&m.timers[e.hk].done); });
-    if(nextE){ const grp=ents.filter(x=>x.hk===nextE.hk&&status(m,idx,est,x).st!=='done'); const i=idx[nextE.hk], hh=m.heats[i], ev=m.events[hh.ev], st=status(m,idx,est,nextE); const run=m.timers&&m.timers[nextE.hk]&&m.timers[nextE.hk].t0&&!m.timers[nextE.hk].done;
+  { if(nextE&&!mergedNext){ const grp=ents.filter(x=>x.hk===nextE.hk&&status(m,idx,est,x).st!=='done'); const i=idx[nextE.hk], hh=m.heats[i], ev=m.events[hh.ev], st=status(m,idx,est,nextE); const run=m.timers&&m.timers[nextE.hk]&&m.timers[nextE.hk].t0&&!m.timers[nextE.hk].done;
       h+=`<section class="tnext ${st.st}"><div class="tn-l"><div class="eyebrow">${run?'Timer running':st.st==='swim'?'In the water now':'Next to time'} · ~${clock(est[i])}</div><div class="tn-code">E${esc(ev.num)} · Heat ${hh.heat}${hh.of?' of '+hh.of:''}</div><div class="tn-sub">${esc(evShort(ev,m))}</div>
         <div class="tn-lanes">${grp.map(x=>`<span><b>${x.lane!=null?'L'+x.lane:'L?'}</b> ${esc(x.relay?'Relay':shortName(x.swimmers[0]))}</span>`).join('')}</div></div>
         <button class="btn primary tn-go" data-act="timer" data-v="${esc(nextE.hk)}">${run?'Back to timer':'Open timer'}</button></section>`; } }
-  // swum but no time: easy to fill in so nobody is missed
-  { const miss=ents.filter(e=>status(m,idx,est,e).st==='past');
-    const shown=UI.missAll?miss:miss.slice(0,3);
-    if(miss.length) h+=`<section class="card miss"><div class="sec-h"><h2>Missing times · ${miss.length}</h2></div><div class="list">${shown.map(e=>{ const hh=m.heats[idx[e.hk]], ev=m.events[hh.ev]; return `<button class="srow" data-act="entry" data-v="${esc(e.id)}"><span class="clock">E${esc(ev.num)}<small class="code">H${hh.heat} · ${e.lane!=null?'L'+e.lane:'L?'}</small></span><span class="who"><b>${esc(e.relay?'Relay':swName(e.swimmers[0]))}</b><span>${esc(evShort(ev,m))}</span></span><span class="res"><span class="chip blocks">Add time</span></span></button>`; }).join('')}</div>${miss.length>shown.length?`<button class="btn ghost" data-act="miss-all" style="align-self:center">Show all ${miss.length}</button>`:''}<p class="hint" style="margin:0">Already swum with no time. Tap to type the time from the scoreboard, or load results later.</p></section>`; }
   // up next
   const upcoming=ents.filter(e=>{const s=status(m,idx,est,e).st;return s!=='done'&&s!=='past';});
-  const seenHeat=new Set(); const cards=[];
+  const seenHeat=new Set(nextE?[nextE.hk]:[]); const cards=[];
   for(const e of upcoming){ if(cards.length>=3) break; if(seenHeat.has(e.hk)) continue; seenHeat.add(e.hk); cards.push(ents.filter(x=>x.hk===e.hk&&!['done','past'].includes(status(m,idx,est,x).st))); }
-  h+=`<section class="stack"><div class="sec-h"><h2>Up next</h2><span class="small muted">${upcoming.length} swims left</span></div>`;
-  if(!cards.length) h+=`<div class="card empty" style="padding:18px">${ents.length?'Everyone has swum. Nice meet.':'None of your roster was found in this heat sheet. Check names in Setup.'}</div>`;
+  h+=`<section class="stack"><div class="sec-h"><h2>Coming up</h2><span class="small muted">${upcoming.length} swims left</span></div>`;
+  if(!cards.length) h+=`<div class="card empty" style="padding:18px">${!ents.length?'None of your roster was found in this heat sheet. Check names in Setup.':upcoming.length?'Nothing else after this heat.':'Everyone has swum. Nice meet. Tap Finish meet to see results.'}</div>`;
   else { h+='<div class="upnext">'; for(const grp of cards){ const e=grp[0], i=idx[e.hk], hh=m.heats[i], ev=m.events[hh.ev], st=status(m,idx,est,e);
       const names=grp.map(x=>x.relay?'Relay '+esc(x.team||''):esc(x.swimmers.map(swName).join(', '))).join(' · ');
       const lanes=grp.map(x=>x.lane!=null?'L'+x.lane:'L?').join(', ');
@@ -1649,6 +1660,7 @@ function viewMeet(m){
     h+='</div>';
   }
   h+=`<p class="hint">Times are estimates from seed times plus ${esc(m.turnover||30)}s between heats. Tap "Next heat is up" now and then, or just hit Start on the timer, and everything re-estimates.</p></section>`;
+  h+=`<section class="stack mtools"><div class="eyebrow">More</div><div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn sm" data-act="sheet" data-v="board">Board screen</button><button class="btn sm" data-act="open-results">Load results</button><button class="btn sm" data-act="quick">Practice timer</button></div></section>`;
   return (m.test?cancelBanner(m):'')+h+cancelBtn(m);
 }
 function dayStart(m){ return dateAt(m.date||todayISO(),'0:00'); }
