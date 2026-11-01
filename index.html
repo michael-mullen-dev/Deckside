@@ -1286,6 +1286,7 @@ function paintSync(){
   else if(S&&S.demo){ s='local'; txt='Demo'; }
   else if(sync.db){ if(s==='synced') txt=sync.dirty.size?'Saving…':'Synced'+agoText(sync.lastOk); else if(s==='syncing') txt='Syncing…'; else if(s==='offline') txt='Offline · saved here'+(sync.lastOk?' · synced'+agoText(sync.lastOk):''); }
   el.dataset.s=s; $('#synctext').textContent=txt;
+  el.hidden=s!=='nosave'; // only show up top when something's wrong (this device can't save)
 }
 function agoText(t){ if(!t) return ''; const m=Math.floor((Date.now()-t)/60000); return m<1?' just now':m<60?' '+m+' min ago':' '+Math.floor(m/60)+' hr ago'; }
 function setSync(s){ sync.status=s; if(s==='synced'&&!sync.dirty.size) sync.lastOk=Date.now(); paintSync(); }
