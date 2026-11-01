@@ -1277,7 +1277,7 @@ function ref(key){ key=KP+key; return {
   }
 };}
 /* Deckside's own database: every coach signs in here. Each coach can only read and write their own rows (row level security). */
-const DECKSIDE_DB={url:'https://jlehvpntnnlphwvltoyo.supabase.co',key:'sb_publishable_KCa68cgyNEZjn_ka1MSkMw_qBQarVCN'};
+const DECKSIDE_DB={url:'https://jlehvpntnnlphwvltoyo.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsZWh2cG50bm5scGh3dmx0b3lvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4ODU5MjcsImV4cCI6MjEwNjQ2MTkyN30.b4t1sH2Y4vhebBhBTY9wwz51Tgx3--Q3e2eqNDkS2uk'};
 function supaConn(){ const c=supaCfg(); return c&&c.url&&c.key?c:DECKSIDE_DB; }
 const WELCOMED='deckside.welcomed';
 function hasSavedLogin(){ try{ return !!localStorage.getItem(LS+'.auth'); }catch(e){ return false; } }
