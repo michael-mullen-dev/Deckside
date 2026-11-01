@@ -2506,7 +2506,7 @@ function viewRecords(){
     <div class="pd-acts">${rk==='meet'?'<button class="btn" data-act="go-records">Edit records</button>':''}</div></section>`;
   h+=recConfirmHTML(pendingRecords());
   h+=`<div class="rfilter" role="group" aria-label="Which records">${[['meet','Meet records'],['practice','Practice records']].map(([x,t])=>`<button data-act="rec-kind" data-v="${x}" aria-pressed="${rk===x}">${t}</button>`).join('')}</div>`;
-  if(rk==='practice') h+=`<p class="hint" style="margin:0">Fastest confirmed times from practices and race days. Meet times never count here.</p>`;
+  h+=`<p class="hint" style="margin:0">${rk==='practice'?'Fastest confirmed times from practices and race days. Meet times never count here.':'Official times only. Load the results after a meet and new records go up on their own. Your watch times never count here.'}</p>`;
   h+=`<div class="rfilter">${[['all','All groups'],['A','White A'],['B','White B']].map(([x,t])=>`<button data-act="rec-view" data-v="${x}" aria-pressed="${v===x}">${t}</button>`).join('')}</div>`;
   h+=recBoardHTML(cats,b,fresh);
   h+=`<section class="stack"><div class="sec-h"><h2>Broken this season</h2><span class="small muted">${recent.length}</span></div>`;
@@ -3502,10 +3502,11 @@ function recordSwims(kind){
   const out=[];
   for(const mid of allMeetIds()){ const m=S.meets[mid]; if(!m||S.demo) continue; if(kind&&recKind(m)!==kind) continue;
     const hg={}; for(const hh of m.heats) if(hh.grp) hg[hh.k]=hh.grp; const tk=testKeys(m);
-    for(const e of m.entries){ if(e.relay||tk[e.hk]) continue; const sw=m.swims&&m.swims[e.id]; const t=entryTime(sw); if(t==null||sw.dq) continue;
+    // meets: only the official time counts, never the watch. Practices: the timed swim.
+    for(const e of m.entries){ if(e.relay||tk[e.hk]) continue; const sw=m.swims&&m.swims[e.id]; const t=!sw||sw.dq?null:m.practice?entryTime(sw):sw.official; if(t==null) continue;
       const ev=m.events[e.ev]; if(entryCourse(m,ev)!=='SCY') continue; if(t<ev.dist*0.2) continue; // ignore impossible test taps
       const sm=swimmer(e.swimmers[0]); const grp=hg[e.hk]||(sm&&sm.group); if(!sm||!grp||!sm.gender) continue;
-      const evk=ev.dist+' '+ev.stroke; out.push({k:grp+sm.gender+'|'+evk,grp,g:sm.gender,ev:evk,t,sm,m,e,sw}); } }
+      const evk=ev.dist+' '+ev.stroke; out.push({k:grp+sm.gender+'|'+evk,grp,g:sm.gender,ev:evk,t,sm,m,e,sw,auto:!m.practice}); } }
   return out;
 }
 /* records only change once the coach confirms them (swim.rec==='yes'); 'no' means it was a mistake */
@@ -3514,14 +3515,15 @@ function recordBoard(kind){ kind=kind||'meet';
   const out={};
   for(const r of (kind==='meet'?S.records:S.precords)||[]){ if(!r.name||r.time==null) continue; const k=r.grp+r.g+'|'+r.ev; if(!out[k]||r.time<out[k].time) out[k]={...r,base:true}; }
   const base={...out};
-  for(const x of recordSwims(kind)){ if(x.sw.rec!=='yes') continue;
+  // official meet results go straight onto the board; practice records wait for the coach to confirm
+  for(const x of recordSwims(kind)){ if(x.auto?x.sw.rec==='no':x.sw.rec!=='yes') continue;
     if(!out[x.k]||x.t<out[x.k].time) out[x.k]={grp:x.grp,g:x.g,ev:x.ev,time:x.t,name:(x.sm.nick||x.sm.first)+' '+x.sm.last.charAt(0)+'.',date:x.m.date,at:x.sw.at,mid:x.m.id,eid:x.e.id,base:false,was:base[x.k]||null}; }
   return out;
 }
 /* swims fast enough to break a record that the coach hasn't confirmed or turned down yet */
 function pendingRecords(){
   const best={};
-  for(const kind of ['meet','practice']){ const b=recordBoard(kind);
+  for(const kind of ['practice']){ const b=recordBoard(kind);
     for(const x of recordSwims(kind)){ if(x.sw.rec) continue; const cur=b[x.k]; if(cur&&x.t>=cur.time) continue; const bk=kind+'|'+x.k;
       if(!best[bk]||x.t<best[bk].t) best[bk]={...x,kind,was:cur||null}; } }
   return Object.values(best).sort((a,b)=>(b.sw.at||0)-(a.sw.at||0));
