@@ -1738,7 +1738,7 @@ const STROKE_SORT=['FL','BK','BR','FR','IM'];
 function boardData(m){
   const evs=[...m.events].sort((a,b)=>a.course.localeCompare(b.course)||STROKE_SORT.indexOf(a.stroke)-STROKE_SORT.indexOf(b.stroke)||a.dist-b.dist);
   const ids=[...new Set(m.entries.map(e=>e.swimmers[0]))].sort((a,b)=>swName(a).localeCompare(swName(b)));
-  const cell={}; const rb=recordBoard();
+  const cell={}; const rb=recordBoard(recKind(m));
   const tk=m.test?{}:testKeys(m);   // test sets stay off the board (unless the whole day is a test)
   for(const e of m.entries){ if(tk[e.hk]) continue; const t=entryTime(m.swims&&m.swims[e.id]); if(t==null) continue; const k=e.swimmers[0]+'|'+e.ev; const c=cell[k]||(cell[k]={best:null,n:0}); c.n++; if(c.best==null||t<c.best) c.best=t; if(!e.relay&&isRecordSwim(m,e,rb)) c.rec=true; }
   return {evs,ids,cell};
@@ -1875,7 +1875,7 @@ function viewDisplay(m){
     const rows=m.entries.filter(e=>e.hk===last.k).map(e=>{ const sw=m.swims&&m.swims[e.id]; const t=entryTime(sw); const pb=priorBest(e.swimmers[0],ev,ev.course,e.id,sw&&sw.at||Date.now(),true); return {e,t,dq:sw&&sw.dq,pb}; })
       .sort((a,b)=>(a.t??1e9)-(b.t??1e9));
     const running=T&&T.t0&&!T.done;
-    let place=0; const board=recordBoard();
+    let place=0; const board=recordBoard(recKind(m));
     const latest=`<section class="latest"><div class="disp-head"><div><div class="eyebrow">${running?'Swimming now':'Latest'}</div><div class="disp-title">${esc(last.planHeat?heatLabel(m,last.k):ev.dist+' '+STROKE_NAME[ev.stroke])}</div></div>${running?`<div class="lt-clock" data-dclock="${T.t0}">${fmt((Date.now()-T.t0)/1000)}</div>`:(!T||!T.t0)?'<span class="chip blocks">Getting ready</span>':''}</div>
       ${rows.map(r=>{ const has=r.t!=null&&!r.dq; if(has) place++; const d=has&&r.pb?r.t-r.pb.time:null;
         return `<div class="lt-row"><span class="lt-pl">${has?place:''}</span><span class="lt-nm">${esc(swName(r.e.swimmers[0]))}${has?cutBadge(r.e.swimmers[0],ev,r.t,r.pb&&r.pb.time):''}</span><span class="lt-t">${r.dq?'DQ':has?fmt(r.t):(running?'…':'—')}${has&&isRecordSwim(m,r.e,board)?'<span class="recstar">*</span>':''}</span><span class="lt-d ${dClass(d)}">${d!=null?fmtDiff(d):''}</span></div>`; }).join('')}
@@ -1892,7 +1892,7 @@ function viewDisplay(m){
   if(nk){ const hh=m.heats[idx[nk]], ev=m.events[hh.ev]; const ents=m.entries.filter(e=>e.hk===nk).sort((a,b)=>(a.lane||0)-(b.lane||0));
     strip=`<section class="upnext-strip"><span class="un-t">Up next · E${esc(ev.num)} H${hh.heat} · ${esc(ev.dist+' '+STROKE_NAME[ev.stroke])}</span>${ents.map(e=>`<span class="un-l"><b>L${e.lane??'?'}</b>${esc(e.relay?'Relay':shortName(e.swimmers[0]))}</span>`).join('')}</section>`; }
   let latest='';
-  if(last){ const ev=m.events[last.ev]; const T=m.timers&&m.timers[last.k]; const running=T&&T.t0&&!T.done; const board=recordBoard();
+  if(last){ const ev=m.events[last.ev]; const T=m.timers&&m.timers[last.k]; const running=T&&T.t0&&!T.done; const board=recordBoard(recKind(m));
     const rows=m.entries.filter(e=>e.hk===last.k).map(e=>{ const sw=m.swims&&m.swims[e.id]; const t=entryTime(sw); const pb=e.relay?null:priorBest(e.swimmers[0],ev,entryCourse(m,ev),e.id,sw&&sw.at||Date.now(),false); const ref=pb?pb.time:e.seed; return {e,t,dq:sw&&sw.dq,ref}; }).sort((a,b)=>(a.t??1e9)-(b.t??1e9));
     let place=0;
     latest=`<section class="latest"><div class="disp-head"><div><div class="eyebrow">${running?'Swimming now':'Latest'}</div><div class="disp-title">${esc('E'+ev.num+' · H'+last.heat+' · '+ev.dist+' '+STROKE_NAME[ev.stroke])}</div></div>${running?`<div class="lt-clock" data-dclock="${T.t0}">${fmt((Date.now()-T.t0)/1000)}</div>`:''}</div>
@@ -2497,14 +2497,16 @@ function viewRecords(){
   if(UI.recTab==='top') return top+viewTop5();
   if(UI.recTab==='best') return top+viewBest();
   if(UI.recTab==='rank') return top+viewRank();
-  const v=UI.recView||'all'; const b=recordBoard(); const fresh=Date.now()-7*864e5;
+  const v=UI.recView||'all', rk=UI.recKind||'meet'; const b=recordBoard(rk); const fresh=Date.now()-7*864e5;
   const cats=v==='all'?REC_CATS:REC_CATS.filter(c=>c[0]===v);
   const all=Object.values(b); const setN=cats.reduce((n,[g,sx])=>n+REC_EVENTS.filter(([k])=>b[g+sx+'|'+k]).length,0), totN=cats.length*REC_EVENTS.length;
   const recent=all.filter(r=>!r.base).sort((x,y)=>(y.at||0)-(x.at||0));
-  let h=top+`<section class="rec-hero"><div class="pd-l"><div class="eyebrow">${esc(SPACE.name)}</div><div class="pd-title">Team records</div>
+  let h=top+`<section class="rec-hero"><div class="pd-l"><div class="eyebrow">${esc(SPACE.name)}</div><div class="pd-title">${rk==='meet'?'Meet records':'Practice records'}</div>
     <div class="pd-stats"><span><b>${setN}</b> of ${totN} set</span><span><b>${recent.length}</b> broken this season</span>${recent[0]?`<span class="pd-saved">Latest: ${esc(recent[0].name)} · ${esc(recEvName(recent[0].ev))} ${fmt(recent[0].time)}</span>`:''}</div></div>
-    <div class="pd-acts"><button class="btn" data-act="go-records">Edit records</button></div></section>`;
+    <div class="pd-acts">${rk==='meet'?'<button class="btn" data-act="go-records">Edit records</button>':''}</div></section>`;
   h+=recConfirmHTML(pendingRecords());
+  h+=`<div class="rfilter" role="group" aria-label="Which records">${[['meet','Meet records'],['practice','Practice records']].map(([x,t])=>`<button data-act="rec-kind" data-v="${x}" aria-pressed="${rk===x}">${t}</button>`).join('')}</div>`;
+  if(rk==='practice') h+=`<p class="hint" style="margin:0">Fastest confirmed times from practices and race days. Meet times never count here.</p>`;
   h+=`<div class="rfilter">${[['all','All groups'],['A','White A'],['B','White B']].map(([x,t])=>`<button data-act="rec-view" data-v="${x}" aria-pressed="${v===x}">${t}</button>`).join('')}</div>`;
   h+=recBoardHTML(cats,b,fresh);
   h+=`<section class="stack"><div class="sec-h"><h2>Broken this season</h2><span class="small muted">${recent.length}</span></div>`;
@@ -3291,6 +3293,7 @@ document.addEventListener('click',async ev=>{
     case 'rank-grp': UI.rankGrp=v; render(); break;
     case 'rank-sex': UI.rankSex=v; render(); break;
     case 'rank-age': UI.rankAge=v; render(); break;
+    case 'rec-kind': UI.recKind=v; render(); break;
     case 'best-open': UI.bestOpen=UI.bestOpen===v?null:v; render(); break;
     case 'cut-g': UI.cutG=v; render(); break;
     case 'load-usa10': { const n=loadUsa10u(); render(); toast(n+' qualifying times loaded'); break; }
@@ -3470,7 +3473,7 @@ function celebrate(r,ms){
   const close=()=>{ d.remove(); }; d.addEventListener('click',close); setTimeout(close,ms);
 }
 /* the board celebrates each newly confirmed record once */
-function recKeys(){ const b=recordBoard(); return Object.values(b).filter(r=>!r.base&&r.mid).map(r=>({k:r.mid+'|'+r.eid,r})); }
+function recKeys(){ return [...Object.values(recordBoard('meet')),...Object.values(recordBoard('practice'))].filter(r=>!r.base&&r.mid).map(r=>({k:r.mid+'|'+r.eid,r})); }
 function checkNewRecords(){
   let seen=null; try{ seen=JSON.parse(localStorage.getItem(DK+'.recSeen')||'null'); }catch(e){}
   const now=recKeys(); const keys=now.map(x=>x.k);
@@ -3494,9 +3497,10 @@ function needGrp(q){
 }
 function practiceGrpSegs(){ const g=S.curGrp||''; return `<span class="segs" role="group" aria-label="Practice group">${[['A','White A'],['B','White B'],['','Not set']].map(([v,t])=>`<button data-act="cur-grp" data-v="${v}" aria-pressed="${g===v}">${t}</button>`).join('')}</span>`; }
 /* every practice/meet swim that could count toward a White Group record */
-function recordSwims(){
+const recKind=m=>m&&m.practice?'practice':'meet';
+function recordSwims(kind){
   const out=[];
-  for(const mid of allMeetIds()){ const m=S.meets[mid]; if(!m||S.demo) continue;
+  for(const mid of allMeetIds()){ const m=S.meets[mid]; if(!m||S.demo) continue; if(kind&&recKind(m)!==kind) continue;
     const hg={}; for(const hh of m.heats) if(hh.grp) hg[hh.k]=hh.grp; const tk=testKeys(m);
     for(const e of m.entries){ if(e.relay||tk[e.hk]) continue; const sw=m.swims&&m.swims[e.id]; const t=entryTime(sw); if(t==null||sw.dq) continue;
       const ev=m.events[e.ev]; if(entryCourse(m,ev)!=='SCY') continue; if(t<ev.dist*0.2) continue; // ignore impossible test taps
@@ -3505,29 +3509,31 @@ function recordSwims(){
   return out;
 }
 /* records only change once the coach confirms them (swim.rec==='yes'); 'no' means it was a mistake */
-function recordBoard(){
+/* two boards: meet records (official meets + the records you entered) and practice records (practices and race days) */
+function recordBoard(kind){ kind=kind||'meet';
   const out={};
-  for(const r of S.records||[]){ if(!r.name||r.time==null) continue; const k=r.grp+r.g+'|'+r.ev; if(!out[k]||r.time<out[k].time) out[k]={...r,base:true}; }
+  for(const r of (kind==='meet'?S.records:S.precords)||[]){ if(!r.name||r.time==null) continue; const k=r.grp+r.g+'|'+r.ev; if(!out[k]||r.time<out[k].time) out[k]={...r,base:true}; }
   const base={...out};
-  for(const x of recordSwims()){ if(x.sw.rec!=='yes') continue;
+  for(const x of recordSwims(kind)){ if(x.sw.rec!=='yes') continue;
     if(!out[x.k]||x.t<out[x.k].time) out[x.k]={grp:x.grp,g:x.g,ev:x.ev,time:x.t,name:(x.sm.nick||x.sm.first)+' '+x.sm.last.charAt(0)+'.',date:x.m.date,at:x.sw.at,mid:x.m.id,eid:x.e.id,base:false,was:base[x.k]||null}; }
   return out;
 }
 /* swims fast enough to break a record that the coach hasn't confirmed or turned down yet */
-function pendingRecords(board){
-  const b=board||recordBoard(); const best={};
-  for(const x of recordSwims()){ if(x.sw.rec) continue; const cur=b[x.k]; if(cur&&x.t>=cur.time) continue;
-    if(!best[x.k]||x.t<best[x.k].t) best[x.k]={...x,was:cur||null}; }
+function pendingRecords(){
+  const best={};
+  for(const kind of ['meet','practice']){ const b=recordBoard(kind);
+    for(const x of recordSwims(kind)){ if(x.sw.rec) continue; const cur=b[x.k]; if(cur&&x.t>=cur.time) continue; const bk=kind+'|'+x.k;
+      if(!best[bk]||x.t<best[bk].t) best[bk]={...x,kind,was:cur||null}; } }
   return Object.values(best).sort((a,b)=>(b.sw.at||0)-(a.sw.at||0));
 }
 function pendingFor(m,e){ return pendingRecords().find(x=>x.m.id===m.id&&x.e.id===e.id)||null; }
 function recConfirmHTML(list){
   if(!list.length) return '';
   const all=list, more=list.length>5&&!UI.recAll; if(more) list=list.slice(0,4);
-  return `<section class="card recq"><div class="sec-h"><h2>${all.length} possible record${all.length>1?'s':''}</h2><span class="small muted">Confirm to make it official</span></div><div class="recq-list">${list.map(x=>`<div class="recq-row"><span class="recq-w"><b>${esc(swName(x.e.swimmers[0]))}</b> <span class="recq-t">${fmt(x.t)}</span><span class="small muted">${esc(recCatName(x.grp,x.g))} ${esc(recEvName(x.ev))} · ${x.was?'beats '+esc(x.was.name)+"'s "+fmt(x.was.time):'first record'}${x.m.practice?'':' · '+esc(x.m.name||'Meet')}</span></span>
+  return `<section class="card recq"><div class="sec-h"><h2>${all.length} possible record${all.length>1?'s':''}</h2><span class="small muted">Confirm to make it official</span></div><div class="recq-list">${list.map(x=>`<div class="recq-row"><span class="recq-w"><b>${esc(swName(x.e.swimmers[0]))}</b> <span class="recq-t">${fmt(x.t)}</span><span class="small muted">${x.m.practice?'Practice record':'Meet record'} · ${esc(recCatName(x.grp,x.g))} ${esc(recEvName(x.ev))} · ${x.was?'beats '+esc(x.was.name)+"'s "+fmt(x.was.time):'first record'}${x.m.practice?'':' · '+esc(x.m.name||'Meet')}</span></span>
     <span class="recq-b"><button class="btn sm primary" data-act="rec-yes" data-v="${esc(x.m.id+'|'+x.e.id)}">Confirm</button><button class="btn sm ghost" data-act="rec-no" data-v="${esc(x.m.id+'|'+x.e.id)}" aria-label="Not a record">Not a record</button></span></div>`).join('')}</div>${more?`<button class="btn ghost recq-more" data-act="rec-all">Show all ${all.length}</button>`:''}</section>`;
 }
-function isRecordSwim(m,e,board){ const b=(board||recordBoard()); for(const k in b){ const r=b[k]; if(!r.base&&r.mid===m.id&&r.eid===e.id) return r; } return null; }
+function isRecordSwim(m,e,board){ const b=(board||recordBoard(recKind(m))); for(const k in b){ const r=b[k]; if(!r.base&&r.mid===m.id&&r.eid===e.id) return r; } return null; }
 function recDate(d){ if(!d) return ''; const x=new Date(d+'T12:00:00'); return isNaN(x)?d:x.toLocaleDateString([], {month:'short',day:'numeric',year:'numeric'}); }
 function recordGrid(big,only){
   const b=recordBoard(); const fresh=Date.now()-7*864e5; const cats=only?REC_CATS.filter(c=>c[0]===only):REC_CATS;
