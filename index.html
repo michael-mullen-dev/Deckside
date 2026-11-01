@@ -1165,7 +1165,7 @@ const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 
 function blank(){ return {v:1,records:[],attendance:{},roster:[],standards:[],meets:{},meetOrder:[],active:null,tags:TAGS_DEFAULT.slice(),coreAt:0,deleted:[],demo:false}; }
 let S=null, localOK=true;
-const APP_V='79';   // keep in step with sw.js CACHE
+const APP_V='80';   // keep in step with sw.js CACHE
 const UI={secOpen:{},tab:'meet',sheet:null,hideDone:true,draft:null,armed:null};
 UI.quickStop=true;
 try{ UI.kiosk=localStorage.getItem(LS+'.kiosk')==='1'; }catch(e){}
