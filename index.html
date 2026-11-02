@@ -668,6 +668,14 @@ body.welcoming header.top,body.welcoming .nav{display:none}
 .spacebtn{border:1.5px solid var(--line);background:var(--surface2);color:var(--ink);font:inherit;font-weight:800;font-size:13px;padding:0 10px;min-height:32px;border-radius:99px;cursor:pointer;white-space:nowrap;flex:none}
 .spacebtn span{font-size:10px;opacity:.7}
 @media (max-width:640px){ .top .meetname{display:none} .top .brand{font-size:18px} .top .sync #synctext{display:none} .top .sync{padding:0 2px} .top-in{gap:8px} .spacebtn{font-size:12px;padding:0 9px;min-height:30px} }
+#testguard{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+#testguard[hidden]{display:none}
+.tg-card{background:var(--surface);color:var(--ink);border-radius:20px;padding:24px 22px;max-width:460px;width:100%;display:flex;flex-direction:column;gap:12px;border:4px solid #D7261E;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.tg-h{font-family:var(--display);font-weight:900;font-size:30px;line-height:1.05;color:#D7261E;text-transform:uppercase;letter-spacing:.01em}
+.tg-p{margin:0;font-size:16px;font-weight:600}
+.tg-card .btn{min-height:56px;font-size:18px;font-weight:800}
+.tg-real{background:#0A66B0;color:#fff;border-color:#0A66B0}
+.tg-test{background:#fff;color:#D7261E;border:2px solid #D7261E}
 .store-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .store-tabs button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;border:1px solid var(--line);border-radius:14px;background:var(--card,transparent);color:var(--ink);cursor:pointer;font:inherit}
 .store-tabs button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:transparent}
@@ -1177,7 +1185,7 @@ const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 
 function blank(){ return {v:1,records:[],attendance:{},roster:[],standards:[],meets:{},meetOrder:[],active:null,tags:TAGS_DEFAULT.slice(),coreAt:0,deleted:[],demo:false}; }
 let S=null, localOK=true;
-const APP_V='82';   // keep in step with sw.js CACHE
+const APP_V='83';   // keep in step with sw.js CACHE
 const UI={secOpen:{},tab:'meet',sheet:null,hideDone:true,draft:null,armed:null};
 UI.quickStop=true;
 try{ UI.kiosk=localStorage.getItem(LS+'.kiosk')==='1'; }catch(e){}
@@ -1209,7 +1217,7 @@ function m3(L,R,B){   // three-way merge: keep whatever each side changed since 
   if(L===undefined) return R; if(R===undefined) return L; return L; }
 const toMap=(arr,kf)=>{ const o={}; for(const x of arr||[]) o[kf(x)]=x; return o; };
 function fromMap(o,L,R,kf){ const ks=[...new Set([...(L||[]).map(kf),...(R||[]).map(kf)])].filter(k=>o[k]!==undefined); return ks.map(k=>o[k]); }
-const CORE_SYNC=['fixBFree','goalPct','roster','standards','tags','records','attendance','deleted','meetOrder','curGrp','testMode','fix30','fix330','draft'];
+const CORE_SYNC=['fixBFree','goalPct','roster','standards','tags','records','attendance','deleted','meetOrder','curGrp','fix30','fix330','draft'];
 function localCore(){ const o={}; for(const k of CORE_SYNC) o[k]=clone(S[k]===undefined?null:S[k]); o.coreAt=S.coreAt||0; return o; }
 function coreBase(){ try{ return JSON.parse(localStorage.getItem(DK+'.coreBase')||'null'); }catch(e){ return null; } }
 function setCoreBase(d){ try{ const o={}; for(const k of CORE_SYNC) o[k]=d[k]===undefined?null:d[k]; localStorage.setItem(DK+'.coreBase',JSON.stringify(o)); }catch(e){} }
@@ -1289,7 +1297,7 @@ async function supaClient(url,key){
   if(!window.supabase) await loadScript('vendor/supabase.js');
   return window.supabase.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,storageKey:LS+'.auth'}});
 }
-function coreDoc(){ return clone({fixBFree:S.fixBFree||0,goalPct:S.goalPct||70,fix30:S.fix30||0,fix330:S.fix330||0,curGrp:S.curGrp||'',testMode:!!S.testMode,records:S.records||[],attendance:S.attendance||{},draft:S.draft||null,roster:S.roster,standards:S.standards,tags:S.tags,meetOrder:S.meetOrder,active:S.active,deleted:S.deleted,coreAt:S.coreAt,meetIndex:S.meetOrder.filter(id=>S.meets[id]).map(id=>({id,updatedAt:S.meets[id].updatedAt||0}))}); }
+function coreDoc(){ return clone({fixBFree:S.fixBFree||0,goalPct:S.goalPct||70,fix30:S.fix30||0,fix330:S.fix330||0,curGrp:S.curGrp||'',records:S.records||[],attendance:S.attendance||{},draft:S.draft||null,roster:S.roster,standards:S.standards,tags:S.tags,meetOrder:S.meetOrder,active:S.active,deleted:S.deleted,coreAt:S.coreAt,meetIndex:S.meetOrder.filter(id=>S.meets[id]).map(id=>({id,updatedAt:S.meets[id].updatedAt||0}))}); }
 /* light / dark mode, per device: 'auto' follows the phone or computer setting */
 function themePref(){ try{ return localStorage.getItem(LS+'.theme')||'auto'; }catch(e){ return 'auto'; } }
 function isDark(){ const t=themePref(); return t==='dark'||(t==='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches); }
@@ -2278,6 +2286,11 @@ function practiceEvent(m,dist,stroke,course){
   if(!ev){ ev={idx:m.events.length,num:String(m.events.length+1),title:dist+' '+STROKE_NAME[stroke]+' '+course,dist,stroke,relay:false,course,gender:'',ageLabel:'',ageMin:null,ageMax:null}; m.events.push(ev); }
   return ev;
 }
+/* starting a set or race day while Test mode is on: make the coach confirm, loudly */
+function testGuard(fn){ if(!S.testMode){ fn(); return; } UI.pendingStart=fn; let d=document.getElementById('testguard'); if(!d){ d=document.createElement('div'); d.id='testguard'; document.body.appendChild(d); }
+  d.innerHTML=`<div class="tg-card" role="alertdialog" aria-labelledby="tg-h"><div class="tg-h" id="tg-h">ARE YOU SURE YOU WANT TO START A TEST DAY?</div><p class="tg-p">Test mode is ON. Times from a test won't count toward best times, drops, Top 5, records or the monthly goal.</p>
+    <button class="btn tg-real" data-act="tg-real">No, make it a real day</button><button class="btn tg-test" data-act="tg-test">Yes, it's only a test</button><button class="btn ghost" data-act="tg-cancel">Cancel</button></div>`; d.hidden=false; }
+function closeTestGuard(){ const d=document.getElementById('testguard'); if(d) d.hidden=true; UI.pendingStart=null; }
 function startPlan(){
   const L=UI.lineup; if(!L) return;
   const m=practiceMeet(L.course); const keys=[];
@@ -3268,9 +3281,12 @@ document.addEventListener('click',async ev=>{
       const b0=buildLineups({ids,heats:L.H,lanes:L.L,strokes:L.strokes,dists:L.dists,dist:L.dist,course:L.course,seed:isSame(L)?'random':'fast'}); if(b0){ L.rowsBy=b0.rowsBy; L.times=b0.times; delete L.rows; } saveDraft(); renderSheet(); toast(isSame(L)?'Reshuffled':'Re-seeded'); break; }
     case 'lu-st': { UI.luStroke=v; UI.luSel=null; UI.sheet?renderSheet():render(); break; }
     case 'q-seed': { UI.quick.seed=v; readPlanInputs(); renderSheet(); break; }
-    case 'lu-start': startPlan(); break;
+    case 'lu-start': testGuard(startPlan); break;
     case 'plan-next': { const k=nextPlanHeat(m,v); if(k) openSheet({type:'timer',v:k}); else { closeSheet(); toast('That was the last heat'); } break; }
-    case 'q-go': if(needGrp(UI.quick)) break; quickGo(); break;
+    case 'q-go': if(needGrp(UI.quick)) break; testGuard(quickGo); break;
+    case 'tg-real': { const f=UI.pendingStart; closeTestGuard(); S.testMode=false; render(); if(UI.sheet) renderSheet(); toast('Test mode off. These times count.'); if(f) f(); break; }
+    case 'tg-test': { const f=UI.pendingStart; closeTestGuard(); if(f) f(); break; }
+    case 'tg-cancel': closeTestGuard(); break;
     case 'q-next': { const lq=clone(UI.lastQuick||UI.quick); const i=IM_ORDER.indexOf(lq.stroke); if(i>=0) lq.stroke=IM_ORDER[(i+1)%4]; UI.quick=lq; openSheet({type:'quick'}); break; }
     case 'timer': openSheet({type:'timer',v}); break;
     case 'entry': openSheet({type:'entry',v}); break;
@@ -3302,10 +3318,7 @@ document.addEventListener('click',async ev=>{
     case 'att-rm': { if(!arm('att-rm-'+v)){ render(); break; } const sm=swimmer(v); if(sm){ sm.out=Date.now(); for(const d in (S.attendance||{})) if(d>=todayISO()) S.attendance[d]=S.attendance[d].filter(x=>x!==v); } save('core'); render(); toast(swName(v)+' removed from the roster. Past times are kept.'); break; }
     case 'sw-back': { const sm=swimmer(v); if(sm){ delete sm.out; save('core'); } UI.sheet?renderSheet():null; render(); toast(swName(v)+' is back on the roster'); break; }
     case 'finish-meet': { if(!m||m.practice) break; const fin=v!=='0'; m.finished=fin; if(fin){ m.now=null; m.finishedAt=Date.now(); } else delete m.finishedAt; m.updatedAt=Date.now(); save(m.id); window.scrollTo(0,0); render(); toast(fin?'Meet finished. Everything is saved.':'Timing reopened.'); break; }
-    case 'close-day': { if(!m) break;
-      { const timed=m.heats.filter(h=>(m.timers&&m.timers[h.k]&&m.timers[h.k].t0)||m.entries.some(e=>e.hk===h.k&&m.swims&&m.swims[e.id]&&m.swims[e.id].time!=null));
-        if(m.test||(timed.length&&timed.every(h=>h.test))){ const id=m.id; delete S.meets[id]; S.meetOrder=S.meetOrder.filter(x=>x!==id); S.deleted=[...(S.deleted||[]),id]; sync.dirty.add('del_'+id); if(sync.db) ref('raw_'+id).delete().catch(()=>{}); try{localStorage.removeItem(DK+'.raw.'+id);}catch(e){}
-          S.active=null; UI.lineup=null; UI.tab='meet'; save('core'); window.scrollTo(0,0); render(); toast('Test ended. Nothing was saved.'); break; } } const what=m.practice?(m.plan?'Race day':'Practice'):'Meet'; S.active=null; UI.lineup=null; UI.tab='meet'; save('core'); window.scrollTo(0,0); render(); toast(what+' saved and closed. It\'s in Setup › Saved meets.'); break; }
+    case 'close-day': { if(!m) break; const hadTest=m.test||m.heats.some(h=>h.test); S.testMode=false; const what=m.practice?(m.plan?'Race day':'Practice'):'Meet'; S.active=null; UI.lineup=null; UI.tab='meet'; save('core'); window.scrollTo(0,0); render(); toast(hadTest?what+' closed. Test sets are kept in Saved meets › Tests, and you can count them anytime.':what+' saved and closed. It\'s in Setup › Saved meets.'); break; }
     case 'open-saved': { UI.tab='setup'; UI.secOpen.meets=true; if(UI.sheet){ UI.sheet=null; $('#sheet').hidden=true; } render(); setTimeout(()=>{ const el=document.querySelector('details[data-sec=meets]'); if(el) el.scrollIntoView({block:'start'}); },30); break; }
     case 'gear': { UI.tab='setup'; if(UI.sheet){ UI.sheet=null; $('#sheet').hidden=true; } render(); window.scrollTo(0,0); break; }
     case 'hide-setup': { UI.hideSetup=!UI.hideSetup; try{ localStorage.setItem(LS+'.hideSetup',UI.hideSetup?'1':'0'); }catch(e){} if(UI.hideSetup){ UI.tab='meet'; try{ localStorage.setItem(LS+'.tab','meet'); }catch(e){} toast('Setup is hidden. Tap the gear at the top to get back to it.'); } render(); break; }
@@ -3839,6 +3852,7 @@ function demoState(){
 
 /* ---------- boot ---------- */
 if(!loadLocal()){ S=SPACE.id==='white'?demoState():blank(); writeLocal(); }
+S.testMode=false;   // test mode never carries over: every time the app opens, times count
 restoreDraft(false);
 cleanupSub30(); cleanupOver330(); if(!supaCfg()) cleanupBFree(); render();
 if(UI.kiosk){ keepAwake(true); document.addEventListener('pointerdown',function fsOnce(){ document.removeEventListener('pointerdown',fsOnce); try{ if(UI.kiosk&&document.fullscreenEnabled&&!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{}); }catch(e){} }); }
