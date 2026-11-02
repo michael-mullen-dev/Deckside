@@ -1185,7 +1185,7 @@ const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 
 function blank(){ return {v:1,records:[],attendance:{},roster:[],standards:[],meets:{},meetOrder:[],active:null,tags:TAGS_DEFAULT.slice(),coreAt:0,deleted:[],demo:false}; }
 let S=null, localOK=true;
-const APP_V='83';   // keep in step with sw.js CACHE
+const APP_V='84';   // keep in step with sw.js CACHE
 const UI={secOpen:{},tab:'meet',sheet:null,hideDone:true,draft:null,armed:null};
 UI.quickStop=true;
 try{ UI.kiosk=localStorage.getItem(LS+'.kiosk')==='1'; }catch(e){}
@@ -1429,7 +1429,7 @@ async function initSync(){
       supa.auth.onAuthStateChange(ev=>{ if(ev==='PASSWORD_RECOVERY'){ UI.wMode='reset'; UI.showWelcome=true; render(); } }); }
     const {data}=await supa.auth.getSession(); const session=data&&data.session;
     if(!session){ sync.email=null; return; }
-    sync.db=supa; sync.uid=session.user.id; sync.email=session.user.email; sync.profile=session.user.user_metadata||{}; setWelcomed();
+    sync.db=supa; sync.uid=session.user.id; sync.email=session.user.email; sync.profile=session.user.user_metadata||{}; setWelcomed(); await checkOwner();
     render(); await pull();
   }catch(e){ if(sync.db) setSync('offline'); }
 }
@@ -1484,7 +1484,7 @@ function viewWelcome(){ const mode=UI.wMode||'up', busy=UI.wBusy?'disabled':'';
 async function sbSignOut(){
   try{ if(supa) await supa.auth.signOut(); }catch(e){}
   if(subs.core){ subs.core(); subs.core=null; } if(subs.meet){ subs.meet(); subs.meet=null; subs.meetId=null; }
-  sync.db=null; sync.uid=null; sync.email=null; sync.profile=null; sync.status='local'; render(); toast('Signed out. Data stays on this device.');
+  sync.db=null; sync.uid=null; sync.email=null; sync.profile=null; sync.owner=false; S.testMode=false; sync.status='local'; render(); toast('Signed out. Data stays on this device.');
 }
 /* fallback refresh for the display screen if live updates drop */
 setInterval(()=>{ if(sync.db&&document.visibilityState==='visible'&&UI.tab==='display'&&!subs.core) pull(); },20000);
@@ -2027,7 +2027,7 @@ function sheetQuick(){
   const cap=planCapacity(q.heats,q.lanes);
   const nag=!S.curGrp&&UI.grpNag;
   let h=`<div class="card stack" id="q-grp" style="gap:8px;${nag?'outline:3px solid var(--blocks);outline-offset:-3px':''}">${hasGroups()?`<div class="row" style="justify-content:space-between"><span class="eyebrow">This practice</span>${practiceGrpSegs()}</div><p class="hint" style="margin:0;${!S.curGrp?'color:var(--bad);font-weight:600':''}">${S.curGrp?'Swims timed now count toward White '+S.curGrp+' records.':'Pick White A or White B so swims count toward the records and get a * when a record falls.'}</p>`:'<span class="eyebrow">This practice</span>'}
-    <label class="toggle" style="justify-content:space-between;width:100%;${S.testMode?'color:var(--blocks);font-weight:700':''}"><span>Test mode<span class="small muted" style="display:block;font-weight:400">Just trying the app? Times show on the board but never count as best times or records.</span></span><input type="checkbox" data-act="test-mode" ${S.testMode?'checked':''}></label></div>`;
+    ${canTest()?`<label class="toggle" style="justify-content:space-between;width:100%;${S.testMode?'color:var(--blocks);font-weight:700':''}"><span>Test mode<span class="small muted" style="display:block;font-weight:400">Just trying the app? Times show on the board but never count as best times or records.</span></span><input type="checkbox" data-act="test-mode" ${S.testMode?'checked':''}></label>`:''}</div>`;
   h+=`<div class="card stack"><div class="sec-h"><div class="eyebrow q-count">${qCountText()}</div></div>
     ${rosterChecklist(q)}</div>`;
   h+=`<div class="card stack"><div class="eyebrow">Race</div><div class="row">${seg('q-dist',[[25,'25'],[50,'50'],[100,'100'],[200,'200']],q.dist,'Distance')}${seg('q-course',[['SCY','SCY'],['SCM','SCM'],['LCM','LCM']],q.course,'Course')}</div></div>`;
@@ -2286,8 +2286,12 @@ function practiceEvent(m,dist,stroke,course){
   if(!ev){ ev={idx:m.events.length,num:String(m.events.length+1),title:dist+' '+STROKE_NAME[stroke]+' '+course,dist,stroke,relay:false,course,gender:'',ageLabel:'',ageMin:null,ageMax:null}; m.events.push(ev); }
   return ev;
 }
+/* Test mode is only for the head coach's own account. Stored as fingerprints (SHA-256), not the addresses themselves. */
+const OWNER_H=['2730f95240dca2be77dbb7d624b05f4412a2d48807d29976f58b9267fcb7cbe9','b602b8236e692d4fb35d4c50298af7b71013b0d482d2d5e086e750e4fdb811ac'];
+async function checkOwner(){ sync.owner=false; try{ const e=(sync.email||'').trim().toLowerCase(); if(!e||!crypto.subtle) return; const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(e)); const hx=[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join(''); sync.owner=OWNER_H.includes(hx); }catch(e){ sync.owner=false; } if(!sync.owner) S.testMode=false; }
+const canTest=()=>!!sync.owner;
 /* starting a set or race day while Test mode is on: make the coach confirm, loudly */
-function testGuard(fn){ if(!S.testMode){ fn(); return; } UI.pendingStart=fn; let d=document.getElementById('testguard'); if(!d){ d=document.createElement('div'); d.id='testguard'; document.body.appendChild(d); }
+function testGuard(fn){ if(S.testMode&&!canTest()) S.testMode=false; if(!S.testMode){ fn(); return; } UI.pendingStart=fn; let d=document.getElementById('testguard'); if(!d){ d=document.createElement('div'); d.id='testguard'; document.body.appendChild(d); }
   d.innerHTML=`<div class="tg-card" role="alertdialog" aria-labelledby="tg-h"><div class="tg-h" id="tg-h">ARE YOU SURE YOU WANT TO START A TEST DAY?</div><p class="tg-p">Test mode is ON. Times from a test won't count toward best times, drops, Top 5, records or the monthly goal.</p>
     <button class="btn tg-real" data-act="tg-real">No, make it a real day</button><button class="btn tg-test" data-act="tg-test">Yes, it's only a test</button><button class="btn ghost" data-act="tg-cancel">Cancel</button></div>`; d.hidden=false; }
 function closeTestGuard(){ const d=document.getElementById('testguard'); if(d) d.hidden=true; UI.pendingStart=null; }
@@ -3429,7 +3433,7 @@ document.addEventListener('toggle',ev=>{ const d=ev.target; if(!d||!d.dataset||!
 document.addEventListener('change',async ev=>{
   const t=ev.target;
   if(t.id==='sw-pick'){ if(t.value) openSheet({type:'swimmer',v:t.value}); t.value=''; return; }
-  if(t.dataset&&t.dataset.act==='test-mode'){ S.testMode=t.checked; UI.testPicks=[]; if(UI.quick) UI.quick.ids=t.checked?[]:groupIds(attList(todayISO())); save('core'); if(UI.sheet) renderSheet(); render(); toast(t.checked?'Test mode on. These times won\'t count.':'Test mode off. New sets count.'); return; }
+  if(t.dataset&&t.dataset.act==='test-mode'){ if(!canTest()){ t.checked=false; S.testMode=false; return; } S.testMode=t.checked; UI.testPicks=[]; if(UI.quick) UI.quick.ids=t.checked?[]:groupIds(attList(todayISO())); save('core'); if(UI.sheet) renderSheet(); render(); toast(t.checked?'Test mode on. These times won\'t count.':'Test mode off. New sets count.'); return; }
   if(t.id==='hideDone'){ UI.hideDone=t.checked; try{localStorage.setItem(LS+'.hide',t.checked?'1':'0');}catch(e){} render(); return; }
   if(t.dataset.act==='dq'){ const m=M(); m.swims=m.swims||{}; const sw=m.swims[t.dataset.v]=m.swims[t.dataset.v]||{tags:[],note:''}; sw.dq=t.checked; if(!sw.at) sw.at=Date.now(); save(m.id); renderSheet(); return; }
   if(t.id==='imp-file'&&t.files&&t.files[0]){ const f=t.files[0]; UI.draft={...(UI.draft||{}),busy:f.name,error:null,result:null}; renderSheet();
