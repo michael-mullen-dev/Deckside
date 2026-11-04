@@ -1185,7 +1185,7 @@ const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 
 function blank(){ return {v:1,records:[],attendance:{},roster:[],standards:[],meets:{},meetOrder:[],active:null,tags:TAGS_DEFAULT.slice(),coreAt:0,deleted:[],demo:false}; }
 let S=null, localOK=true;
-const APP_V='84';   // keep in step with sw.js CACHE
+const APP_V='85';   // keep in step with sw.js CACHE
 const UI={secOpen:{},tab:'meet',sheet:null,hideDone:true,draft:null,armed:null};
 UI.quickStop=true;
 try{ UI.kiosk=localStorage.getItem(LS+'.kiosk')==='1'; }catch(e){}
@@ -1217,14 +1217,14 @@ function m3(L,R,B){   // three-way merge: keep whatever each side changed since 
   if(L===undefined) return R; if(R===undefined) return L; return L; }
 const toMap=(arr,kf)=>{ const o={}; for(const x of arr||[]) o[kf(x)]=x; return o; };
 function fromMap(o,L,R,kf){ const ks=[...new Set([...(L||[]).map(kf),...(R||[]).map(kf)])].filter(k=>o[k]!==undefined); return ks.map(k=>o[k]); }
-const CORE_SYNC=['fixBFree','goalPct','roster','standards','tags','records','attendance','deleted','meetOrder','curGrp','fix30','fix330','draft'];
+const CORE_SYNC=['fixBFree2','fixBFree','goalPct','roster','standards','tags','records','attendance','deleted','meetOrder','curGrp','fix30','fix330','draft'];
 function localCore(){ const o={}; for(const k of CORE_SYNC) o[k]=clone(S[k]===undefined?null:S[k]); o.coreAt=S.coreAt||0; return o; }
 function coreBase(){ try{ return JSON.parse(localStorage.getItem(DK+'.coreBase')||'null'); }catch(e){ return null; } }
 function setCoreBase(d){ try{ const o={}; for(const k of CORE_SYNC) o[k]=d[k]===undefined?null:d[k]; localStorage.setItem(DK+'.coreBase',JSON.stringify(o)); }catch(e){} }
 function mergeCore(L,R,B){ const out={}; const newerR=(R.coreAt||0)>(L.coreAt||0); const b=k=>B?B[k]:undefined;
   for(const k of CORE_SYNC){ const l=L[k], r=R[k];
     if(k==='goalPct'){ out[k]=J(l)===J(r)?l:(B&&J(l)===J(b(k)))?r:(B&&J(r)===J(b(k)))?l:(newerR?r:l); continue; }
-    if(k==='fix30'||k==='fix330'||k==='fixBFree'){ out[k]=Math.max(l||0,r||0); continue; }
+    if(k==='fix30'||k==='fix330'||k==='fixBFree'||k==='fixBFree2'){ out[k]=Math.max(l||0,r||0); continue; }
     if(k==='deleted'||k==='meetOrder'){ out[k]=[...new Set([...(l||[]),...(r||[])])]; continue; }
     if(k==='draft'||k==='curGrp'||k==='testMode'){ out[k]=J(l)===J(r)?l:(B&&J(l)===J(b(k)))?r:(B&&J(r)===J(b(k)))?l:(newerR?r:l); continue; }
     if(k==='roster'){ const kf=x=>x.id; out[k]=fromMap(m3(toMap(l,kf),toMap(r,kf),B?toMap(b(k),kf):undefined),l,r,kf); continue; }
@@ -1297,7 +1297,7 @@ async function supaClient(url,key){
   if(!window.supabase) await loadScript('vendor/supabase.js');
   return window.supabase.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,storageKey:LS+'.auth'}});
 }
-function coreDoc(){ return clone({fixBFree:S.fixBFree||0,goalPct:S.goalPct||70,fix30:S.fix30||0,fix330:S.fix330||0,curGrp:S.curGrp||'',records:S.records||[],attendance:S.attendance||{},draft:S.draft||null,roster:S.roster,standards:S.standards,tags:S.tags,meetOrder:S.meetOrder,active:S.active,deleted:S.deleted,coreAt:S.coreAt,meetIndex:S.meetOrder.filter(id=>S.meets[id]).map(id=>({id,updatedAt:S.meets[id].updatedAt||0}))}); }
+function coreDoc(){ return clone({fixBFree2:S.fixBFree2||0,fixBFree:S.fixBFree||0,goalPct:S.goalPct||70,fix30:S.fix30||0,fix330:S.fix330||0,curGrp:S.curGrp||'',records:S.records||[],attendance:S.attendance||{},draft:S.draft||null,roster:S.roster,standards:S.standards,tags:S.tags,meetOrder:S.meetOrder,active:S.active,deleted:S.deleted,coreAt:S.coreAt,meetIndex:S.meetOrder.filter(id=>S.meets[id]).map(id=>({id,updatedAt:S.meets[id].updatedAt||0}))}); }
 /* light / dark mode, per device: 'auto' follows the phone or computer setting */
 function themePref(){ try{ return localStorage.getItem(LS+'.theme')||'auto'; }catch(e){ return 'auto'; } }
 function isDark(){ const t=themePref(); return t==='dark'||(t==='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches); }
@@ -1553,7 +1553,7 @@ async function pull(){
     S.meetOrder=[...new Set([...S.meetOrder.filter(id=>S.meets[id]),...Object.keys(S.meets)])];
     if(S.active&&!S.meets[S.active]) S.active=S.meetOrder[0]||null;
     writeLocal(); render(); if(UI.sheet) renderSheet();
-    setSync('synced'); flush(); subscribeLive(); discoverMeets().then(()=>cleanupBFree());
+    setSync('synced'); flush(); subscribeLive(); discoverMeets().then(()=>{ cleanupBFree(); cleanupBFree2(); });
   }catch(e){ setSync('offline'); }
 }
 window.addEventListener('online',()=>{ if(sync.db){ sync.status==='offline'&&sync.dirty.size?flush():0; } });
@@ -1634,7 +1634,7 @@ function render(){ paintSpace();
   document.body.classList.toggle('kiosk',!!UI.kiosk); document.body.classList.toggle('nosetup',!!UI.hideSetup);
   main.classList.toggle('wide',UI.tab==='display'); main.classList.toggle('recwide',UI.tab==='records'); main.classList.toggle('meetwide',UI.tab==='meet'); main.classList.toggle('attwide',UI.tab==='attend'); document.body.classList.toggle('dispmode',UI.tab==='display');
   const fb=$('#fsbtn'); if(fb) fb.hidden=!document.fullscreenEnabled;
-  main.innerHTML=`<div class="view">${fixBFreeBanner()}${h}</div>`;
+  main.innerHTML=`<div class="view">${fixBFreeBanner()}${fixB2Banner()}${h}</div>`;
   { const rb=main.querySelector('.rnav [aria-pressed="true"]'); if(rb){ const nv=rb.parentNode; nv.scrollLeft=Math.max(0,rb.offsetLeft-nv.offsetLeft-(nv.clientWidth-rb.offsetWidth)/2); } }
   if(UI.tab==='display'){ try{ checkNewRecords(); }catch(e){} startDispTick(); fitDisplay(); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fitDisplay); }
 }
@@ -2522,6 +2522,29 @@ function viewBest(){
    For each White B swimmer who showed a freestyle drop on a meet day (up to Oct 24), remove the times that drop was
    measured against: the time entered in Setup and earlier swims in that event. Keeps a log so it can be undone. */
 const FIXB_CUTOFF='2026-10-24';
+/* one-time fix (Nov 3 2026): five White B swimmers had wrong old 50 Free times, so Nov 1 showed fake gains.
+   Remove their 50 Free times from before Nov 1 (entered in Setup or swum earlier). For Anaisha and Arha the coach
+   confirmed a 2.00 drop on Nov 1, so their best before that day is set to Nov 1 time + 2.00. Logged so it can be undone. */
+const FIXB2_DAY='2026-11-01', FIXB2=[['Anaisha','S',2],['Arha','H',2],['Erica','X',null],['Owen','Z',null],['Yukti','M',null]];
+function cleanupBFree2(){
+  if(SPACE.id!=='white'||S.fixBFree2||S.demo||!S.roster.length) return; const now=Date.now(); const log=[]; const k=TKEY(50,'FR','SCY');
+  for(const [first,li,drop] of FIXB2){
+    const hits=team().filter(s=>[s.first,s.nick].filter(Boolean).some(f=>norm(f).split(' ')[0]===norm(first))&&norm(s.last).startsWith(li.toLowerCase())); const sm=hits.length===1?hits[0]:hits.find(s=>s.group==='B');
+    if(!sm) continue; const item={id:sm.id,entered:sm.times&&sm.times[k]!=null?sm.times[k]:null,swims:[],set:null};
+    const hist=history(sm.id).filter(x=>x.time!=null&&TKEY(x.ev.dist,x.ev.stroke,x.course)===k);
+    const day1=hist.filter(x=>(x.m.date||'')===FIXB2_DAY).sort((a,b)=>a.time-b.time)[0];
+    if(!day1) continue;   // their Nov 1 swim hasn't synced to this device yet: try again later
+    if(sm.times&&sm.times[k]!=null) delete sm.times[k];
+    for(const x of hist){ if((x.m.date||'')>=FIXB2_DAY) continue; const w=x.m.swims[x.e.id]; item.swims.push({mid:x.m.id,eid:x.e.id,time:w.time,official:w.official,at:w.at}); delete w.time; delete w.official; delete w.splits; x.m.gone=x.m.gone||{}; x.m.gone['s:'+x.e.id]=now; save(x.m.id); }
+    if(drop){ sm.times=sm.times||{}; sm.times[k]=Math.round((day1.time+drop)*100)/100; item.set=sm.times[k]; }
+    log.push(item); }
+  if(log.length<FIXB2.length) return;   // wait until all five swimmers and their Nov 1 swims are here
+  S.fixBFree2=now; try{ localStorage.setItem(DK+'.fixBFree2Log',JSON.stringify(log)); }catch(e){} save('core'); UI.fixB2N=log.length; render(); }
+function undoBFree2(){ let log=[]; try{ log=JSON.parse(localStorage.getItem(DK+'.fixBFree2Log')||'[]'); }catch(e){} const k=TKEY(50,'FR','SCY');
+  for(const it of log){ const sm=swimmer(it.id); if(sm){ sm.times=sm.times||{}; if(it.entered!=null) sm.times[k]=it.entered; else delete sm.times[k]; }
+    for(const w of it.swims){ const m=S.meets[w.mid]; if(!m||!m.swims[w.eid]) continue; Object.assign(m.swims[w.eid],{time:w.time,at:Date.now()}); if(w.official!=null) m.swims[w.eid].official=w.official; if(m.gone) delete m.gone['s:'+w.eid]; save(w.mid); } }
+  try{ localStorage.removeItem(DK+'.fixBFree2Log'); }catch(e){} UI.fixB2N=0; save('core'); render(); toast('Old 50 Free times are back'); }
+function fixB2Banner(){ if(!UI.fixB2N) return ''; return `<div class="banner"><span><b>Fixed the 50 Free times for ${UI.fixB2N} White B swimmers.</b> The wrong old times are gone. Anaisha and Arha now show their 2.00 drops.</span><span class="row" style="gap:6px;flex-wrap:nowrap"><button class="btn sm" data-act="fixb2-undo">Undo</button><button class="btn sm ghost" data-act="fixb2-ok" aria-label="Close">✕</button></span></div>`; }
 function cleanupBFree(){
   if(SPACE.id!=='white'||S.fixBFree||S.demo||!S.roster.length) return; const now=Date.now(); const log=[];
   for(const sm of team().filter(x=>x.group==='B')){
@@ -3369,6 +3392,8 @@ document.addEventListener('click',async ev=>{
     case 'theme-toggle': { setTheme(isDark()?'light':'dark'); toast(isDark()?'Dark mode':'Light mode'); render(); break; }
     case 'theme-set': setTheme(v); render(); break;
     case 'miss-all': UI.missAll=true; render(); break;
+    case 'fixb2-undo': undoBFree2(); break;
+    case 'fixb2-ok': UI.fixB2N=0; render(); break;
     case 'fixb-undo': undoBFree(); break;
     case 'fixb-ok': UI.fixBFreeN=0; render(); break;
     case 'space-pick': openSheet({type:'spaces'}); break;
@@ -3858,7 +3883,7 @@ function demoState(){
 if(!loadLocal()){ S=SPACE.id==='white'?demoState():blank(); writeLocal(); }
 S.testMode=false;   // test mode never carries over: every time the app opens, times count
 restoreDraft(false);
-cleanupSub30(); cleanupOver330(); if(!supaCfg()) cleanupBFree(); render();
+cleanupSub30(); cleanupOver330(); if(!supaCfg()){ cleanupBFree(); cleanupBFree2(); } render();
 if(UI.kiosk){ keepAwake(true); document.addEventListener('pointerdown',function fsOnce(){ document.removeEventListener('pointerdown',fsOnce); try{ if(UI.kiosk&&document.fullscreenEnabled&&!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{}); }catch(e){} }); }
 else reopenSheet();
 initSync().then(()=>{ if(UI.kiosk) render(); else if(!UI.sheet) reopenSheet(); });
