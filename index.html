@@ -999,6 +999,13 @@ body:not(.tablemode) .tile>.tile-h{margin-bottom:10px}
 .pl-t{display:flex;flex-direction:column;align-items:flex-end;font-variant-numeric:tabular-nums;font-weight:800;font-size:17px;line-height:1.15}
 .pl-t small{font-size:12px;font-weight:700}
 @container tile (min-width:700px){ .pl-wrap{display:grid} }
+
+/* meet screens docked inside the Meet card */
+#sheet.docked .sheet{inset:auto;top:var(--dt);left:var(--dl);width:var(--dw);height:var(--dh);z-index:15;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);padding-top:0;animation:none}
+#sheet.docked .sheet-h{padding:3px 4px 3px 12px}
+#sheet.docked .sheet-h h3{font-size:13px;letter-spacing:.03em}
+#sheet.docked .x{width:26px;height:26px;border-radius:7px;font-size:16px}
+#sheet.docked .sheet-b{padding:12px 12px 16px}
 </style>
 
 </head>
@@ -1285,7 +1292,7 @@ const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 
 function blank(){ return {v:1,records:[],attendance:{},roster:[],standards:[],meets:{},meetOrder:[],active:null,tags:TAGS_DEFAULT.slice(),coreAt:0,deleted:[],demo:false}; }
 let S=null, localOK=true;
-const APP_V='87';   // keep in step with sw.js CACHE
+const APP_V='88';   // keep in step with sw.js CACHE
 const UI={secOpen:{},tab:'meet',sheet:null,hideDone:true,draft:null,armed:null};
 UI.quickStop=true;
 try{ UI.kiosk=localStorage.getItem(LS+'.kiosk')==='1'; }catch(e){}
@@ -1800,6 +1807,7 @@ function render(){ paintSpace();
     const sh=h.parentElement, hd=t.querySelector('.tile-h'), x=document.createElement('span'); x.className='tile-x';
     [...sh.children].forEach(c=>{ if(c!==h) x.appendChild(c); }); if(x.childNodes.length) hd.insertBefore(x,hd.querySelector('.tile-grip')||hd.querySelector('.tile-up')); sh.remove(); }); }
   { const rb=main.querySelector('.rnav [aria-pressed="true"]'); if(rb){ const nv=rb.parentNode; nv.scrollLeft=Math.max(0,rb.offsetLeft-nv.offsetLeft-(nv.clientWidth-rb.offsetWidth)/2); } }
+  if(UI.sheet) dockSheet();
   if(cardShown('display')){ try{ checkNewRecords(); }catch(e){} startDispTick(); fitDisplay(); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fitDisplay); }
 }
 
@@ -3009,6 +3017,12 @@ function reopenSheet(){ try{ const x=JSON.parse(localStorage.getItem(DK+'.sheet'
     if(x.type==='timer'&&!(m&&m.heats.some(h=>h.k===x.v))) return false; if(x.type==='lineup'&&!UI.lineup) return false; if(x.type==='lineup-edit'&&x.v==='draft'&&!UI.lineup) return false;
     if(x.type==='entry'&&!(m&&m.entries.some(e=>e.id===x.v))) return false; if(x.type==='quick'&&!UI.quick) return false;
     UI.sheet={type:x.type,v:x.v}; renderSheet(); return true; }catch(e){ return false; } }
+/* on a big screen with other cards down, meet-day screens (timer, practice setup, lineups) open inside the Meet card instead of covering everything */
+const DOCK_TYPES=['timer','quick','lineup','lineup-edit','entry','pick','add-entry','board'];
+function sheetDocked(){ return !!(UI.sheet&&DOCK_TYPES.includes(UI.sheet.type)&&tableMode()&&UI.table.includes('meet')&&UI.table.length>1&&document.querySelector('.tile[data-card="meet"]')); }
+function dockSheet(){ const el=$('#sheet'); if(!el) return; const on=sheetDocked(); el.classList.toggle('docked',on);
+  if(on){ const r=document.querySelector('.tile[data-card="meet"]').getBoundingClientRect(); el.style.setProperty('--dt',r.top+'px'); el.style.setProperty('--dl',r.left+'px'); el.style.setProperty('--dw',r.width+'px'); el.style.setProperty('--dh',r.height+'px'); } }
+window.addEventListener('resize',()=>{ if(UI.sheet) dockSheet(); });
 function openSheet(s){ UI.sheet=s; renderSheet(); rememberSheet(); }
 function closeSheet(){ UI.sheet=null; $('#sheet').hidden=true; $('#sheet').innerHTML=''; rememberSheet(); render(); }
 function renderSheet(){
@@ -3039,6 +3053,7 @@ function renderSheet(){
   el.hidden=false; const b=el.querySelector('.sheet-b'); if(b&&s.keepScroll) b.scrollTop=scroll; s.keepScroll=true;
   if(s.type==='timer') startTick();
   if(s.type==='quick'&&UI.qSearch){ const i=el.querySelector('.pick-search'); if(i) filterPick(i); }
+  dockSheet();
 }
 
 function sheetTimer(m,hk){
@@ -3470,7 +3485,7 @@ document.addEventListener('click',async ev=>{
   const act=b.dataset.act, v=b.dataset.v, m=M();
   switch(act){
     case 'tab': UI.attEdit=false; if(v==='setup') UI.tab='setup'; else if(CARD_IDS.includes(v)) putDown(v); else UI.tab=UI.table[UI.table.length-1]||''; try{localStorage.setItem(LS+'.tab',UI.tab);}catch(e){} if(UI.sheet){UI.sheet=null;$('#sheet').hidden=true;} render(); window.scrollTo(0,0); break;
-    case 'card': { if(UI.sheet){UI.sheet=null;$('#sheet').hidden=true;} UI.attEdit=false;
+    case 'card': { if(UI.sheet&&!(sheetDocked()&&v!=='meet')){UI.sheet=null;$('#sheet').hidden=true;} UI.attEdit=false;
       const on=UI.table.includes(v);
       if(!on) putDown(v);
       else if(UI.tab==='setup'){ UI.tab=v; saveTable(); }
@@ -3479,7 +3494,7 @@ document.addEventListener('click',async ev=>{
       render(); if(!isWide()) window.scrollTo(0,0);
       if(!on&&isWide()) setTimeout(()=>{ const t=document.querySelector(`.tile[data-card="${v}"]`); if(t){ t.classList.add('landed'); setTimeout(()=>t.classList.remove('landed'),700); } },0);
       break; }
-    case 'card-up': sendUp(v); render(); break;
+    case 'card-up': sendUp(v); if(UI.sheet&&!sheetDocked()&&v==='meet'){ UI.sheet=null; $('#sheet').hidden=true; } render(); break;
     case 'heats-done': UI.heatsHideDone=!UI.heatsHideDone; render(); break;
     case 'pl-grp': UI.plGrp=v; render(); break;
     case 'close': UI.armed=null; closeSheet(); break;

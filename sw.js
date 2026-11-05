@@ -1,5 +1,5 @@
 // Deckside offline support: keeps the app and its files on the device so it opens with no signal.
-const CACHE = 'deckside-v87';
+const CACHE = 'deckside-v88';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './apple-touch-icon.png',
