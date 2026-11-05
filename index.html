@@ -960,6 +960,11 @@ body:not(.tablemode) .tile>.tile-h{margin-bottom:10px}
 ::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
 ::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+
+.tile-x{display:inline-flex;align-items:center;gap:6px;flex:none;font-size:12px;color:var(--muted)}
+.tile-x .small{font-size:12px}
+.tile-x .btn{min-height:24px;padding:0 9px;font-size:12px;border-radius:7px}
+.table .tbody>.view>section.stack:first-child:empty{display:none}
 </style>
 
 </head>
@@ -1753,7 +1758,9 @@ function render(){ paintSpace();
   const keep={}; main.querySelectorAll('.tbody[data-card]').forEach(t=>{ keep[t.dataset.card]=[t.scrollTop,t.scrollLeft]; });
   main.innerHTML=`<div class="view">${fixBFreeBanner()}${fixB2Banner()}${h}</div>`;
   main.querySelectorAll('.tbody[data-card]').forEach(t=>{ const k=keep[t.dataset.card]; if(k){ t.scrollTop=k[0]; t.scrollLeft=k[1]; } });
-  { const alias={cuts:'qualifying times',records:'records'}; main.querySelectorAll('.tile').forEach(t=>{ const id=t.dataset.card; const h=t.querySelector('.tbody h2'); if(!h||!h.parentElement.classList.contains('sec-h')) return; const tx=h.textContent.trim().toLowerCase(); if(tx===cardName(id).toLowerCase()||tx===alias[id]) h.parentElement.classList.add('dup'); }); }
+  { const alias={cuts:'qualifying times',records:'records'}; main.querySelectorAll('.tile').forEach(t=>{ const id=t.dataset.card; const h=t.querySelector('.tbody h2'); if(!h||!h.parentElement.classList.contains('sec-h')) return; const tx=h.textContent.trim().toLowerCase(); if(tx!==cardName(id).toLowerCase()&&tx!==alias[id]) return;
+    const sh=h.parentElement, hd=t.querySelector('.tile-h'), x=document.createElement('span'); x.className='tile-x';
+    [...sh.children].forEach(c=>{ if(c!==h) x.appendChild(c); }); if(x.childNodes.length) hd.insertBefore(x,hd.querySelector('.tile-grip')||hd.querySelector('.tile-up')); sh.remove(); }); }
   { const rb=main.querySelector('.rnav [aria-pressed="true"]'); if(rb){ const nv=rb.parentNode; nv.scrollLeft=Math.max(0,rb.offsetLeft-nv.offsetLeft-(nv.clientWidth-rb.offsetWidth)/2); } }
   if(cardShown('display')){ try{ checkNewRecords(); }catch(e){} startDispTick(); fitDisplay(); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fitDisplay); }
 }
