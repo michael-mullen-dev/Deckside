@@ -376,35 +376,35 @@ body.kiosk main{padding-block:12px 12px!important}
 .bctl-sts button[aria-pressed="true"]{background:var(--blocks);color:var(--blocks-ink);border-color:var(--blocks);opacity:1}
 .upd-now{background:var(--blocks);color:var(--blocks-ink);border:0;font-weight:800;font-size:16px;min-height:44px;padding:0 16px;border-radius:10px;animation:updPulse 1.6s ease-in-out infinite}
 @keyframes updPulse{50%{transform:scale(1.05)}}
-@media (max-width:560px){ .recsegs.rectop .segs{display:grid;grid-template-columns:1fr 1fr} .recsegs.rectop .segs button{min-height:42px;border-top:1px solid var(--line)} .recsegs.rectop .segs button:nth-child(-n+2){border-top:0} }
+@container tile (max-width:560px){ .recsegs.rectop .segs{display:grid;grid-template-columns:1fr 1fr} .recsegs.rectop .segs button{min-height:42px;border-top:1px solid var(--line)} .recsegs.rectop .segs button:nth-child(-n+2){border-top:0} }
 .sets{display:flex;flex-direction:column;gap:10px}
 .pm-two{display:flex;flex-direction:column;gap:18px}.pm-two:empty{display:none}
-@media (min-width:1100px){
-  main.meetwide{max-width:none;padding-inline:28px}
-  main.meetwide .pm-two{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);align-items:start;gap:22px}
-  main.meetwide .pm-two>:only-child{grid-column:1/-1}
-  main.meetwide .sets{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:14px;align-items:start}
-  main.meetwide .sec-h h2{font-size:28px}
-  main.meetwide .board th{font-size:13px}
-  main.meetwide .board td b{font-size:19px}
-  main.meetwide .board .bt{font-size:26px}
-  main.meetwide .board .bd{font-size:13px}
-  main.meetwide .srow{padding:12px 16px}
-  main.meetwide .srow .who b{font-size:18px}
-  main.meetwide .srow .who span{font-size:14px}
-  main.meetwide .srow .clock{font-size:20px}
-  main.meetwide .srow .res .t{font-size:24px}
-  main.meetwide .ev-h{font-size:14px;padding:11px 16px 9px}
-  main.meetwide .drops .net{font-size:24px}
-  main.meetwide .board.drops td b{font-size:18px}
-  main.meetwide .up-name{font-size:30px}
-  main.meetwide .up-meta{font-size:16px}
-  main.meetwide .bctl .bctl-t{font-size:26px} main.meetwide .bctl .bctl-t small{font-size:15px}
-  main.meetwide .bctl .btn.big{min-height:66px;font-size:20px}
-  main.meetwide .bctl-sts button{font-size:15px;min-height:40px}
-  main.meetwide .card .small{font-size:15px}
-  main.meetwide .drops td.nm b{font-size:18px} main.meetwide .drops .why{font-size:13px}
-  main.meetwide .dtally .dt-n{font-size:40px} main.meetwide .dtally .dt-s{font-size:16px}
+@container tile (min-width:1100px){
+  .tbody{max-width:none;padding-inline:28px}
+  .tbody .pm-two{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);align-items:start;gap:22px}
+  .tbody .pm-two>:only-child{grid-column:1/-1}
+  .tbody .sets{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:14px;align-items:start}
+  .tbody .sec-h h2{font-size:28px}
+  .tbody .board th{font-size:13px}
+  .tbody .board td b{font-size:19px}
+  .tbody .board .bt{font-size:26px}
+  .tbody .board .bd{font-size:13px}
+  .tbody .srow{padding:12px 16px}
+  .tbody .srow .who b{font-size:18px}
+  .tbody .srow .who span{font-size:14px}
+  .tbody .srow .clock{font-size:20px}
+  .tbody .srow .res .t{font-size:24px}
+  .tbody .ev-h{font-size:14px;padding:11px 16px 9px}
+  .tbody .drops .net{font-size:24px}
+  .tbody .board.drops td b{font-size:18px}
+  .tbody .up-name{font-size:30px}
+  .tbody .up-meta{font-size:16px}
+  .tbody .bctl .bctl-t{font-size:26px} .tbody .bctl .bctl-t small{font-size:15px}
+  .tbody .bctl .btn.big{min-height:66px;font-size:20px}
+  .tbody .bctl-sts button{font-size:15px;min-height:40px}
+  .tbody .card .small{font-size:15px}
+  .tbody .drops td.nm b{font-size:18px} .tbody .drops .why{font-size:13px}
+  .tbody .dtally .dt-n{font-size:40px} .tbody .dtally .dt-s{font-size:16px}
 }
 :root{--top-h:66px} @media (min-width:900px){ :root{--top-h:52px} }
 .att-editbar{position:sticky;top:calc(var(--top-h,56px) + 6px);z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--ink);color:var(--surface);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow)}
@@ -420,8 +420,8 @@ body.kiosk main{padding-block:12px 12px!important}
 .rk-score{font-family:var(--display);font-weight:700;font-size:28px;line-height:1;font-variant-numeric:tabular-nums}
 .rk-s .qcut{margin-left:0;font-size:11px;background:var(--good);color:#fff}
 .rk-up{align-self:flex-start;background:var(--blocks);color:var(--blocks-ink);font-size:11px;font-weight:800;padding:1px 8px;border-radius:99px;margin-top:2px}
-@media (min-width:900px){ main.recwide .rank{display:grid;grid-template-columns:repeat(2,1fr)} }
-@media (min-width:1400px){ main.recwide .rank{grid-template-columns:repeat(3,1fr)} }
+@container tile (min-width:900px){ .tbody .rank{display:grid;grid-template-columns:repeat(2,1fr)} }
+@container tile (min-width:1400px){ .tbody .rank{grid-template-columns:repeat(3,1fr)} }
 .recsegs.rectop .segs button:last-child:nth-child(odd){grid-column:1/-1}
 .bestrow{border-top:1px solid var(--line)}.bestrow:first-child{border-top:0}
 .bestrow .prow{width:100%;border:0;background:none;text-align:left}
@@ -450,7 +450,7 @@ body.kiosk main{padding-block:12px 12px!important}
 .pc-drops span{background:rgba(78,211,154,.15);border:1px solid rgba(78,211,154,.5);border-radius:99px;padding:4px 12px;font-size:14px}
 .pc-drops span b{color:#4ED39A}.pc-drops small{opacity:.7}
 .pc-drops span.cut{background:rgba(227,179,65,.18);border-color:rgba(227,179,65,.6)}.pc-drops span.cut b{color:#E3B341}
-@media (max-width:640px){ .pc-stats{grid-template-columns:repeat(2,minmax(0,1fr))} .pc-acts{width:100%} .pc-acts .btn{flex:1} .pc-name{font-size:28px} }
+@container tile (max-width:640px){ .pc-stats{grid-template-columns:repeat(2,minmax(0,1fr))} .pc-acts{width:100%} .pc-acts .btn{flex:1} .pc-name{font-size:28px} }
 .pc-wrap{padding:10px 8px}
 .pchart{width:100%;height:auto;display:block}
 .pc-grid{stroke:var(--line);stroke-width:1}
@@ -471,7 +471,7 @@ body.kiosk main{padding-block:12px 12px!important}
 .dg-names span{font-weight:700;font-size:clamp(14px,1.5vw,20px);padding:6px 14px;border-radius:99px;background:var(--surface2);color:var(--muted)}
 .dg-names span.hit{background:var(--good-soft);color:var(--ink);border:2px solid var(--good)}.dg-names small{color:var(--good);font-weight:800}
 .drecs .rboard{margin:0}
-@media (min-width:1100px){ .drecs .rboard.c4{grid-template-columns:repeat(4,minmax(0,1fr))} }
+@container tile (min-width:1100px){ .drecs .rboard.c4{grid-template-columns:repeat(4,minmax(0,1fr))} }
 .gbar{position:relative;height:14px;border-radius:99px;background:rgba(255,255,255,.18);margin:14px 0 22px;overflow:visible}
 .gbar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--good),#4ED39A);transition:width .4s}
 .gbar-goal{position:absolute;top:-6px;bottom:-6px;width:3px;background:var(--blocks);border-radius:2px;transform:translateX(-1px)}
@@ -479,7 +479,7 @@ body.kiosk main{padding-block:12px 12px!important}
 .gbar.big{height:34px}.dgoal .gbar{background:var(--surface2)}.gbar.big .gbar-goal span{font-size:18px}
 .goal-hero .pd-l{flex:1;min-width:240px}
 .goal-month .btn{min-width:48px;font-size:22px;padding:0}
-@media (max-width:640px){ .goal-hero .pd-acts.goal-month{position:absolute;top:10px;right:12px;width:auto} .goal-hero .pd-acts.goal-month .btn{min-height:34px;min-width:38px;font-size:18px;flex:none} }
+@container tile (max-width:640px){ .goal-hero .pd-acts.goal-month{position:absolute;top:10px;right:12px;width:auto} .goal-hero .pd-acts.goal-month .btn{min-height:34px;min-width:38px;font-size:18px;flex:none} }
 .ghits{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
 .ghit{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;background:var(--surface);box-shadow:var(--shadow);border:0;border-left:4px solid var(--good);text-align:left;font:inherit;color:var(--ink);cursor:pointer}
 .gh-n,.gh-d{display:flex;flex-direction:column}.gh-n small,.gh-d small{font-size:12px;color:var(--muted)}
@@ -495,13 +495,13 @@ body.kiosk main{padding-block:12px 12px!important}
 .rec-hero .eyebrow{color:inherit;opacity:.7}
 .rec-hero .pd-acts .btn:not(.primary){background:transparent;color:inherit;border-color:rgba(255,255,255,.35)}
 .rec-hero{position:relative}
-@media (max-width:640px){ .rec-hero .pd-acts{position:absolute;top:10px;right:12px;width:auto} .rec-hero .pd-acts .btn{flex:none;min-height:30px;padding:0 12px;font-size:13px} .rec-hero .pd-title{margin-top:6px} }
+@container tile (max-width:640px){ .rec-hero .pd-acts{position:absolute;top:10px;right:12px;width:auto} .rec-hero .pd-acts .btn{flex:none;min-height:30px;padding:0 12px;font-size:13px} .rec-hero .pd-title{margin-top:6px} }
 .rfilter{display:inline-flex;width:max-content;max-width:100%;align-self:flex-start;gap:4px;background:var(--surface2);padding:4px;border-radius:99px;margin-bottom:14px}
 .rfilter button{border:0;background:none;color:var(--ink);font:inherit;font-weight:700;font-size:14px;padding:0 16px;min-height:36px;border-radius:99px;cursor:pointer;white-space:nowrap}
 .rfilter button[aria-pressed="true"]{background:var(--surface);box-shadow:var(--shadow);color:var(--accent)}
 .rboard{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:22px}
-@media (min-width:760px){ .rboard{grid-template-columns:repeat(2,minmax(0,1fr))} }
-@media (min-width:1400px){ main.recwide .rboard.c4{grid-template-columns:repeat(4,minmax(0,1fr))} }
+@container tile (min-width:760px){ .rboard{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@container tile (min-width:1400px){ .tbody .rboard.c4{grid-template-columns:repeat(4,minmax(0,1fr))} }
 .rcol{background:var(--surface);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
 .rcol header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:3px solid var(--accent)}
 .rcol.girls header{border-bottom-color:#D9468F}
@@ -558,7 +558,7 @@ body.kiosk main{padding-block:12px 12px!important}
 .t5card li.first{font-size:1.05em}
 .t5rec{font-size:10px;font-weight:800;letter-spacing:.04em;color:var(--blocks);vertical-align:1px}
 .t5none{margin:4px 0;color:var(--muted);font-size:14px}
-@media (min-width:1400px){ main.recwide .top5{grid-template-columns:repeat(5,1fr)} }
+@container tile (min-width:1400px){ .tbody .top5{grid-template-columns:repeat(5,1fr)} }
 .evpick{display:flex;flex-direction:column;gap:6px}
 .evrow{display:grid;grid-template-columns:4.2em 1fr;align-items:center;gap:8px}
 .evrow .segs{width:100%;display:flex}.evrow .segs button{flex:1;min-height:40px;padding:0 4px}
@@ -595,7 +595,7 @@ details.fold>summary::after{content:'›';font-size:22px;color:var(--muted);tran
 .pd-acts{display:flex;gap:8px;flex-wrap:wrap}
 .pd-acts .btn{min-height:48px;padding:0 18px;font-weight:700}
 .pd-acts .btn:not(.primary){background:transparent;color:inherit;border-color:rgba(255,255,255,.35)}
-@media (max-width:640px){ .pd-acts{width:100%} .pd-acts .btn{flex:1} .pd-title{font-size:28px} }
+@container tile (max-width:640px){ .pd-acts{width:100%} .pd-acts .btn{flex:1} .pd-title{font-size:28px} }
 .pd-folds{display:flex;flex-direction:column;gap:12px}
 .pd-foot{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin-top:4px}
 .pd-foot .btn{min-height:44px}
@@ -609,8 +609,8 @@ details.fold>summary::after{content:'›';font-size:22px;color:var(--muted);tran
 .recq-t{font-family:var(--display);font-weight:700;font-size:18px}
 .recq-w .small{flex-basis:100%}
 .recq-b{display:flex;gap:6px;flex:none}
-@media (max-width:640px){ .recq .sec-h .small{display:none} .recq-row{flex-wrap:wrap} .recq-w .small{flex-basis:auto} .recq-b{width:100%} .recq-b .btn{flex:1;min-height:40px} .recq-w b{font-size:16px} }
-@media (min-width:1100px){ main.meetwide .recq-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px} }
+@container tile (max-width:640px){ .recq .sec-h .small{display:none} .recq-row{flex-wrap:wrap} .recq-w .small{flex-basis:auto} .recq-b{width:100%} .recq-b .btn{flex:1;min-height:40px} .recq-w b{font-size:16px} }
+@container tile (min-width:1100px){ .tbody .recq-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px} }
 .closebar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 8px 8px 14px;margin-bottom:12px;border:1px solid var(--line);border-radius:12px;background:var(--card,transparent)}
 .closebar>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .backup-box{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--line);border-radius:14px}
@@ -619,9 +619,9 @@ details.fold>summary::after{content:'›';font-size:22px;color:var(--muted);tran
 .home-hero .eyebrow{color:inherit;opacity:.7}
 .home-acts{display:flex;gap:8px;flex-wrap:wrap}.home-acts .btn{min-height:50px;font-weight:700;padding:0 18px}
 .home-acts .btn:not(.primary){background:transparent;color:inherit;border-color:rgba(255,255,255,.35)}
-@media (max-width:640px){ .home-acts{width:100%} .home-acts .btn{flex:1 1 40%} .home-acts .btn.primary{flex-basis:100%} }
+@container tile (max-width:640px){ .home-acts{width:100%} .home-acts .btn{flex:1 1 40%} .home-acts .btn.primary{flex-basis:100%} }
 .home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
-@media (max-width:640px){ .home-grid{grid-template-columns:1fr 1fr;gap:10px} .home-grid .hcard:nth-child(3){grid-column:1/-1} .hcard{padding:14px;min-height:120px} .hc-big{font-size:32px} .hc-big small{font-size:13px} }
+@container tile (max-width:640px){ .home-grid{grid-template-columns:1fr 1fr;gap:10px} .home-grid .hcard:nth-child(3){grid-column:1/-1} .hcard{padding:14px;min-height:120px} .hc-big{font-size:32px} .hc-big small{font-size:13px} }
 .hcard{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:16px 18px;border-radius:16px;background:var(--surface);box-shadow:var(--shadow);border:0;font:inherit;color:var(--ink);text-align:left;cursor:pointer;min-height:132px}
 .hcard:hover{outline:2px solid var(--accent);outline-offset:-2px}
 .hc-l{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
@@ -662,7 +662,7 @@ body.welcoming header.top,body.welcoming .nav{display:none}
 .w-fine{margin:0;text-align:center}
 .rr-ed{display:flex;gap:6px;flex-wrap:wrap;grid-column:1/-1;margin-top:4px}
 .tn-go{min-height:60px;font-size:19px;font-weight:800;padding:0 28px}
-@media (max-width:640px){ .tn-go{width:100%} }
+@container tile (max-width:640px){ .tn-go{width:100%} }
 .miss{border:2px solid var(--blocks)}
 .up-open{font-size:12px;font-weight:800;color:var(--accent);margin-top:2px}
 .spacebtn{border:1.5px solid var(--line);background:var(--surface2);color:var(--ink);font:inherit;font-weight:800;font-size:13px;padding:0 10px;min-height:32px;border-radius:99px;cursor:pointer;white-space:nowrap;flex:none}
@@ -706,29 +706,29 @@ details.fold>.fold-b{padding:0 16px 16px}
 .at-lowc{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 14px;border-radius:14px;border:0;border-left:4px solid var(--bad);background:var(--surface);box-shadow:var(--shadow);font:inherit;color:var(--ink);text-align:left;cursor:pointer}
 .at-lowc span{font-size:14px}.at-lowc small{color:var(--bad);font-weight:700;font-size:12px}
 .at-list{padding:4px 0}
-@media (min-width:1000px){ .at-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:0} .at-list .at-row{border-top:1px solid var(--line)} .at-list .at-row:nth-child(-n+2){border-top:0} .at-list .at-row:nth-child(odd){border-right:1px solid var(--line)} }
+@container tile (min-width:1000px){ .at-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:0} .at-list .at-row{border-top:1px solid var(--line)} .at-list .at-row:nth-child(-n+2){border-top:0} .at-list .at-row:nth-child(odd){border-right:1px solid var(--line)} }
 .at-row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(60px,2fr) 3.4em 3.2em;align-items:center;gap:12px;width:100%;padding:9px 16px;border:0;border-top:1px solid var(--line);background:none;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
 .at-row:first-child{border-top:0}.at-row:hover{background:var(--surface2)}
 .at-nm{display:flex;flex-direction:column;min-width:0}.at-nm b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.at-nm small{color:var(--muted);font-size:12px}
 .at-track{height:10px;border-radius:99px;background:var(--surface2);overflow:hidden}.at-track span{display:block;height:100%;background:var(--accent);border-radius:99px}.at-track span.hi{background:var(--good)}.at-track span.lo{background:var(--bad)}
 .at-n{color:var(--muted);font-size:13px;text-align:right;font-variant-numeric:tabular-nums}.at-p{font-family:var(--display);font-weight:700;font-size:18px;text-align:right}
-@media (max-width:640px){ .at-row{grid-template-columns:minmax(0,1fr) 70px 3em;gap:8px;padding:9px 12px} .at-n{display:none} .att-mname{font-size:22px} }
+@container tile (max-width:640px){ .at-row{grid-template-columns:minmax(0,1fr) 70px 3em;gap:8px;padding:9px 12px} .at-n{display:none} .att-mname{font-size:22px} }
 .att{display:flex;flex-direction:column;gap:18px}
 .att-side{display:flex;flex-direction:column;gap:12px}
 .att-main{display:flex;flex-direction:column;gap:12px;min-width:0}
 .att-acts{display:flex;flex-wrap:wrap;gap:8px}
 .att-acts .btn{flex:1 1 auto;min-height:44px}
-@media (max-width:640px){ .att-acts{flex-wrap:nowrap;gap:6px} .att-acts .btn{min-height:38px;padding:0 8px;font-size:13px;white-space:nowrap} }
-@media (min-width:1000px){
-  main.attwide{max-width:none;padding-inline:28px}
-  main.attwide .att{display:grid;grid-template-columns:minmax(320px,380px) minmax(0,1fr);align-items:start;gap:24px}
-  main.attwide .att-side{position:sticky;top:calc(var(--top-h,56px) + 14px)}
-  main.attwide .att-hero{flex-direction:column;align-items:stretch}
-  main.attwide .att-big{justify-content:center}
-  main.attwide .att-bars{min-width:0}
-  main.attwide .att-days{flex-wrap:wrap;overflow:visible}
-  main.attwide .att-acts{flex-direction:column}
-  main.attwide .cklist.big{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+@container tile (max-width:640px){ .att-acts{flex-wrap:nowrap;gap:6px} .att-acts .btn{min-height:38px;padding:0 8px;font-size:13px;white-space:nowrap} }
+@container tile (min-width:1000px){
+  .tbody{max-width:none;padding-inline:28px}
+  .tbody .att{display:grid;grid-template-columns:minmax(320px,380px) minmax(0,1fr);align-items:start;gap:24px}
+  .tbody .att-side{position:sticky;top:calc(var(--top-h,56px) + 14px)}
+  .tbody .att-hero{flex-direction:column;align-items:stretch}
+  .tbody .att-big{justify-content:center}
+  .tbody .att-bars{min-width:0}
+  .tbody .att-days{flex-wrap:wrap;overflow:visible}
+  .tbody .att-acts{flex-direction:column}
+  .tbody .cklist.big{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
 }
 .att-head{display:flex;flex-direction:column;gap:14px}
 .att-day{display:flex;align-items:center;gap:10px}
@@ -762,24 +762,24 @@ details.fold>.fold-b{padding:0 16px 16px}
 .cklist.big .ck .ln{font-weight:600;font-size:14px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .cklist.big .ck .nm{display:none}
 .cklist.big .ck .meta{font-size:12px}
-@media (min-width:900px){ .cklist.big{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))} .att-n{font-size:96px} }
+@container tile (min-width:900px){ .cklist.big{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))} .att-n{font-size:96px} }
 .recbox{padding:6px}
-@media (min-width:900px){ main.recwide{max-width:none;padding-inline:28px}
-  main.recwide .recbox{padding:10px 14px}
-  main.recwide .recbox .recgrid.big,main.recwide .recbox .recgrid.big.one{font-size:13px;border-spacing:6px}
-  main.recwide .recbox .recgrid.big tbody th{font-size:19px;white-space:nowrap} main.recwide .recbox .recgrid.big thead th{font-size:14px}
-  main.recwide .recbox .recgrid.big thead th:first-child{width:10.5em}
-  main.recwide .recbox .recgrid.big td.open .rt{font-size:1.5em} main.recwide .recbox .recgrid.big td.open .rn{font-size:.95em} }
-@media (min-width:1400px){ main.recwide .recbox .recgrid.big,main.recwide .recbox .recgrid.big.one{font-size:15px} main.recwide .recbox .recgrid.big tbody th{font-size:22px} main.recwide .recbox .recgrid.big thead th{font-size:16px} }
+@container tile (min-width:900px){ .tbody{max-width:none;padding-inline:28px}
+  .tbody .recbox{padding:10px 14px}
+  .tbody .recbox .recgrid.big,.tbody .recbox .recgrid.big.one{font-size:13px;border-spacing:6px}
+  .tbody .recbox .recgrid.big tbody th{font-size:19px;white-space:nowrap} .tbody .recbox .recgrid.big thead th{font-size:14px}
+  .tbody .recbox .recgrid.big thead th:first-child{width:10.5em}
+  .tbody .recbox .recgrid.big td.open .rt{font-size:1.5em} .tbody .recbox .recgrid.big td.open .rn{font-size:.95em} }
+@container tile (min-width:1400px){ .tbody .recbox .recgrid.big,.tbody .recbox .recgrid.big.one{font-size:15px} .tbody .recbox .recgrid.big tbody th{font-size:22px} .tbody .recbox .recgrid.big thead th{font-size:16px} }
 .recbox .recgrid.big{font-size:7.4px;border-spacing:3px}
 .recbox .recgrid.big tbody th{font-size:13px;width:4.6em;white-space:normal}
 .recbox .recgrid.big thead th:first-child{width:8.5em}
-@media (max-width:599px){ .recbox .recgrid.big .rt{font-size:2.15em;letter-spacing:-.02em} .recbox .recgrid.big{border-spacing:2px} .recbox .recgrid.big td{padding:.5em .15em} .recbox .recgrid.big td.open .rt{font-size:1.5em} }
+@container tile (max-width:599px){ .recbox .recgrid.big .rt{font-size:2.15em;letter-spacing:-.02em} .recbox .recgrid.big{border-spacing:2px} .recbox .recgrid.big td{padding:.5em .15em} .recbox .recgrid.big td.open .rt{font-size:1.5em} }
 .recbox .recgrid.big.one tbody th{font-size:15px}
 .recsegs{display:flex}.recsegs .segs{flex:1;display:flex}.recsegs .segs button{flex:1;white-space:nowrap}
-@media (min-width:600px){ .recbox .recgrid.big{font-size:12px} }
+@container tile (min-width:600px){ .recbox .recgrid.big{font-size:12px} }
 .recbox .recgrid.big.one{font-size:12.5px}
-@media (min-width:600px){ .recbox .recgrid.big.one{font-size:16px} }
+@container tile (min-width:600px){ .recbox .recgrid.big.one{font-size:16px} }
 .celebrate{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(6,18,30,.55);animation:celIn .25s ease-out;cursor:pointer}
 .celebrate canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .cel-card{position:relative;background:var(--blocks);color:var(--blocks-ink);border-radius:24px;padding:28px 34px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);max-width:min(92vw,900px);animation:celPop .5s cubic-bezier(.2,1.6,.4,1)}
@@ -795,7 +795,7 @@ details.fold>.fold-b{padding:0 16px 16px}
 .board.cuttbl th,.board.cuttbl td{white-space:nowrap;padding:9px 3px;text-align:right;font-variant-numeric:tabular-nums;font-size:13.5px}
 .board.cuttbl th:first-child,.board.cuttbl td:first-child{text-align:left;padding-left:8px}
 .board.cuttbl th{font-size:11.5px;letter-spacing:.04em}
-@media (min-width:600px){ .board.cuttbl th,.board.cuttbl td{font-size:16px;padding:10px 12px} }
+@container tile (min-width:600px){ .board.cuttbl th,.board.cuttbl td{font-size:16px;padding:10px 12px} }
 .dheats-wrap{display:flex;flex-direction:column;gap:.5em}
 .dheats-top{display:flex;justify-content:space-between;align-items:baseline;gap:.6em;flex-wrap:wrap}
 .dheats-top .disp-title{font-size:2.2em}
@@ -891,6 +891,55 @@ td.r,th.r{text-align:right}
 .preview{border:1px dashed var(--line);border-radius:12px;padding:12px}
 .toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;z-index:80;max-width:calc(100% - 32px)}
 @media (prefers-reduced-motion:no-preference){ .sheet{animation:up .18s ease-out} @keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}} }
+
+/* ---------- the table ---------- */
+.setbtn{display:inline-flex!important;margin-left:6px}
+body.kiosk .setbtn{display:none!important}
+.nav.hand .nav-in{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;max-width:none;justify-content:safe center;padding:0 6px}
+.nav.hand .nav-in::-webkit-scrollbar{display:none}
+.nav.hand button{flex:0 0 auto;min-width:68px;padding:4px 8px;border-radius:12px;position:relative;cursor:pointer;transition:transform .12s,background .12s}
+.nav.hand button span{white-space:nowrap}
+.nav.hand button[aria-pressed="true"]{color:var(--accent);background:var(--surface2,rgba(0,0,0,.05))}
+.nav.hand button[aria-pressed="true"]::after{content:"";position:absolute;top:3px;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:var(--accent)}
+.nav.hand button[aria-pressed="false"]:hover{transform:translateY(-3px);color:var(--ink)}
+.nav.hand.dropto{box-shadow:inset 0 3px 0 var(--accent)}
+.tbody{container:tile/inline-size}
+.sheet-in{container:tile/inline-size}
+.tbody.flow{padding:0}
+.tile-h{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 12px;background:var(--surface);border-bottom:1px solid var(--line);user-select:none;-webkit-user-select:none}
+.tile-h b{flex:1;min-width:0;font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.03em;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile-ic svg{width:18px;height:18px;display:block;color:var(--accent)}
+.tile-grip{color:var(--muted);font-size:16px;line-height:1;cursor:grab}
+.tile-up{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.tile-up:hover{color:var(--ink);border-color:var(--ink)}
+.tile-up svg{width:16px;height:16px}
+/* phone: one card at a time, swipe between them */
+body:not(.tablemode) .tile>.tile-h{border:1px solid var(--line);border-radius:12px;margin-bottom:14px}
+.pdots{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:-4px 0 -6px}.pdots:empty{display:none}
+.pdots::-webkit-scrollbar{display:none}
+.pdots button{flex:0 0 auto;border:1.5px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-weight:700;font-size:13px;padding:0 12px;min-height:32px;border-radius:99px;cursor:pointer}
+.pdots button[aria-current="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+/* big screens: every card on the table shares the screen */
+body.tablemode main{max-width:none;padding:10px 12px calc(var(--nav-h) + 10px + env(safe-area-inset-bottom,0px));height:calc(100dvh - var(--hdr,56px));box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden}
+body.tablemode main>.view{flex:1;min-height:0;gap:10px}
+.table{flex:1;min-height:0;display:grid;gap:10px;grid-template-columns:repeat(var(--tc,1),minmax(0,1fr));grid-auto-rows:minmax(0,1fr)}
+.table .tile{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--ground);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);transition:box-shadow .15s,transform .15s,opacity .15s}
+.table .tile-h{cursor:grab}
+.table .tile-h:active{cursor:grabbing}
+.table .tbody{flex:1;min-height:0;overflow:auto;padding:14px;--top-h:0px;overscroll-behavior:contain}
+.table .tile.lifted{opacity:.45}
+.table .tile.dropto{box-shadow:0 0 0 3px var(--accent)}
+.table .tile.landed{animation:landed .5s ease-out}
+@keyframes landed{from{transform:translateY(-24px) scale(.97);opacity:.3}to{transform:none;opacity:1}}
+body.dragging main{outline:2px dashed var(--line);outline-offset:-6px;border-radius:16px}
+.table-empty{display:flex;align-items:center;justify-content:center;min-height:50vh}
+body.tablemode .table-empty{flex:1}
+.te-in{text-align:center;max-width:420px;border:2px dashed var(--line);border-radius:20px;padding:36px 28px;color:var(--muted)}
+.te-in h2{color:var(--ink);font-family:var(--display);text-transform:uppercase;font-size:26px;margin-bottom:6px}
+.set-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.set-h h1{font-family:var(--display);text-transform:uppercase;font-size:30px;line-height:1}
+.set-h .btn svg{width:18px;height:18px;vertical-align:-4px}
+@media (prefers-reduced-motion:reduce){ .table .tile.landed{animation:none} }
 </style>
 
 </head>
@@ -902,21 +951,13 @@ td.r,th.r{text-align:right}
     <div class="meetname" id="meetname"></div>
     <div class="sync" id="sync" data-s="local"><span class="dot"></span><span id="synctext">On this phone</span></div>
     <button class="fsbtn" id="fsbtn" data-act="fullscreen" aria-label="Full screen" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
-    <button class="fsbtn" id="themebtn" data-act="theme-toggle" aria-label="Switch light or dark mode" title="Light / dark mode"></button>
-    <button class="fsbtn setbtn" id="setbtn" data-act="gear" aria-label="Setup" title="Setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    
+    <button class="fsbtn setbtn" id="setbtn" data-act="gear" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   </div>
   <div class="rope"></div>
 </header>
 <main id="main"></main>
-<nav class="nav" aria-label="Sections">
-  <div class="nav-in">
-    <button data-act="tab" data-v="meet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg>Meet</button>
-    <button data-act="tab" data-v="records"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z"/><path d="M7 6H4v1a3 3 0 003 3M17 6h3v1a3 3 0 01-3 3"/></svg>Records</button>
-    <button data-act="tab" data-v="display"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>Display</button>
-    <button data-act="tab" data-v="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Setup</button>
-    <button data-act="tab" data-v="attend"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 12l2 2 4-4"/></svg>Attendance</button>
-  </div>
-</nav>
+<nav class="nav hand" aria-label="Your cards"><div class="nav-in" id="hand"></div></nav>
 <div id="sheet" hidden></div>
 <div id="toast" class="toast" hidden></div>
 
@@ -1185,7 +1226,7 @@ const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 
 function blank(){ return {v:1,records:[],attendance:{},roster:[],standards:[],meets:{},meetOrder:[],active:null,tags:TAGS_DEFAULT.slice(),coreAt:0,deleted:[],demo:false}; }
 let S=null, localOK=true;
-const APP_V='85';   // keep in step with sw.js CACHE
+const APP_V='86';   // keep in step with sw.js CACHE
 const UI={secOpen:{},tab:'meet',sheet:null,hideDone:true,draft:null,armed:null};
 UI.quickStop=true;
 try{ UI.kiosk=localStorage.getItem(LS+'.kiosk')==='1'; }catch(e){}
@@ -1198,7 +1239,50 @@ try{ UI.dispMode=localStorage.getItem(LS+'.dmode')||'times'; }catch(e){}
 try{ UI.grp=localStorage.getItem(DK+'.grp')||'all'; }catch(e){ UI.grp='all'; }
 try{ const q0=localStorage.getItem(DK+'.qs'); if(q0!=null) UI.quickStop=q0==='1'; }catch(e){}
 try{ UI.qsHidden=localStorage.getItem(DK+'.qsHide')==='1'; UI.secOpen=JSON.parse(localStorage.getItem(LS+'.secOpen')||'{}')||{}; }catch(e){}
-try{ UI.tab=localStorage.getItem(LS+'.tab')||'meet'; if(UI.tab==='swimmers') UI.tab='records'; UI.hideDone=localStorage.getItem(LS+'.hide')!=='0'; }catch(e){}
+try{ UI.tab=localStorage.getItem(LS+'.tab')||'meet'; UI.hideDone=localStorage.getItem(LS+'.hide')!=='0'; }catch(e){}
+/* ---------- The table: data cards you put down and send back up ---------- */
+const IC=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const CARDS=[
+  ['meet','Meet',IC('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/>')],
+  ['display','Display',IC('<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>')],
+  ['records','Records',IC('<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z"/><path d="M7 6H4v1a3 3 0 003 3M17 6h3v1a3 3 0 01-3 3"/>')],
+  ['top','Top 5',IC('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>')],
+  ['best','Best times',IC('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>')],
+  ['cuts','Cuts',IC('<path d="M5 12l4 4L19 6"/>')],
+  ['rank','Rankings',IC('<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>')],
+  ['goal','Goal',IC('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>')],
+  ['attend','Attendance',IC('<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 12l2 2 4-4"/>')],
+  ['swimmers','Swimmers',IC('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0M16 4.5a3.5 3.5 0 010 7M21.5 20a6.5 6.5 0 00-4-6"/>')],
+];
+const CARD_IDS=CARDS.map(c=>c[0]); const cardName=id=>(CARDS.find(c=>c[0]===id)||[,''])[1];
+try{ const t=JSON.parse(localStorage.getItem(LS+'.table')||'null'); if(Array.isArray(t)) UI.table=[...new Set(t.filter(x=>CARD_IDS.includes(x)))]; }catch(e){}
+if(!UI.table) UI.table=[CARD_IDS.includes(UI.tab)?UI.tab:'meet'];
+function saveTable(){ try{ localStorage.setItem(LS+'.table',JSON.stringify(UI.table)); if(UI.tab) localStorage.setItem(LS+'.tab',UI.tab); }catch(e){} }
+const isWide=()=>window.innerWidth>=900;
+const tableMode=()=>isWide()&&!UI.kiosk&&UI.tab!=='setup';
+/* is this card on screen right now? (big screens show every card on the table, phones show one) */
+function cardShown(id){ if(UI.kiosk) return id==='display'; if(UI.tab==='setup'||!UI.table.includes(id)) return false; return isWide()||UI.tab===id; }
+function putDown(id,at){ if(!CARD_IDS.includes(id)) return; const i=UI.table.indexOf(id); if(i<0){ if(at!=null&&at>=0) UI.table.splice(at,0,id); else UI.table.push(id); } UI.tab=id; saveTable(); }
+function sendUp(id){ const i=UI.table.indexOf(id); if(i<0) return; UI.table.splice(i,1); if(UI.tab===id) UI.tab=UI.table[Math.min(i,UI.table.length-1)]||''; saveTable(); }
+function cardBody(id,m){
+  switch(id){
+    case 'meet': return viewMeet(m);
+    case 'display': return viewDisplay(m);
+    case 'records': return viewRecBoard();
+    case 'top': return viewTop5();
+    case 'best': return viewBest();
+    case 'cuts': return viewCuts();
+    case 'rank': return viewRank();
+    case 'goal': return viewGoal();
+    case 'attend': return viewAttend();
+    case 'swimmers': return viewSwimmers();
+  } return ''; }
+function tileHTML(id,m,wide){
+  let body=''; try{ body=cardBody(id,m); }catch(e){ console.error(e); body=`<div class="card empty"><p>This card hit a problem: ${esc(e.message||e)}</p></div>`; }
+  return `<section class="tile ${UI.tab===id?'focus':''}" data-card="${id}"><header class="tile-h" data-card="${id}" ${wide?'draggable="true"':''}><span class="tile-ic">${(CARDS.find(c=>c[0]===id)||[])[2]||''}</span><b>${esc(cardName(id))}</b>${wide?'<span class="tile-grip" aria-hidden="true">⠿</span>':''}<button class="tile-up" data-act="card-up" data-v="${id}" title="Send back up to your hand" aria-label="Send ${esc(cardName(id))} back up">${IC('<path d="M12 19V5M5 12l7-7 7 7"/>')}</button></header><div class="tbody" data-card="${id}"><div class="view">${body}</div></div></section>`; }
+function paintHand(){ const nv=$('#hand'); if(!nv) return;
+  nv.innerHTML=CARDS.map(([id,nm,ic])=>{ const on=UI.table.includes(id); return `<button data-act="card" data-v="${id}" data-card="${id}" draggable="true" aria-pressed="${on}" aria-current="${UI.tab===id}" title="${on?'On the table':'Put on the table'}">${ic}<span>${esc(nm)}</span></button>`; }).join(''); 
+  const cur=nv.querySelector('[aria-current="true"]'); if(cur&&nv.scrollWidth>nv.clientWidth) nv.scrollLeft=Math.max(0,cur.offsetLeft-(nv.clientWidth-cur.offsetWidth)/2); }
 
 function loadLocal(){
   try{ const r=localStorage.getItem(DK); if(r){ S=Object.assign(blank(),JSON.parse(r)); return true; } }catch(e){ localOK=false; }
@@ -1387,7 +1471,7 @@ async function adoptCore(rc){
     if(!lm||(lm.updatedAt||0)<mi.updatedAt){ try{ const ms=await withTimeout(ref('meet_'+mi.id).get()); if(ms.exists){ const d=ms.data(); setMeet(mi.id,mergeMeet(lm,d)); if(lm&&meetSig(S.meets[mi.id])!==meetSig(d)) sync.dirty.add('meet_'+mi.id); } }catch(e){} } }
   for(const id of S.deleted) delete S.meets[id];
   S.meetOrder=[...new Set([...(rc.meetOrder||[]).filter(id=>S.meets[id]),...Object.keys(S.meets)])];
-  const following=(UI.sheet&&UI.sheet.type==='board')||UI.tab==='display';
+  const following=(UI.sheet&&UI.sheet.type==='board')||cardShown('display');
   if((following||!S.meets[S.active])&&S.meets[rc.active]) S.active=rc.active;
   if(S.active&&!S.meets[S.active]) S.active=S.meetOrder[0]||null;
   writeLocal(); watchMeet(); liveRender(); discoverMeets();
@@ -1487,7 +1571,7 @@ async function sbSignOut(){
   sync.db=null; sync.uid=null; sync.email=null; sync.profile=null; sync.owner=false; S.testMode=false; sync.status='local'; render(); toast('Signed out. Data stays on this device.');
 }
 /* fallback refresh for the display screen if live updates drop */
-setInterval(()=>{ if(sync.db&&document.visibilityState==='visible'&&UI.tab==='display'&&!subs.core) pull(); },20000);
+setInterval(()=>{ if(sync.db&&document.visibilityState==='visible'&&cardShown('display')&&!subs.core) pull(); },20000);
 /* Find every meet saved to the account, straight from the table. The meet list inside the core doc
    can be overwritten by another device that hasn't seen a new meet yet, so it isn't trusted for discovery. */
 async function discoverMeets(quiet){
@@ -1520,7 +1604,7 @@ function watchAllMeets(){
   subs.all=()=>{ try{ supa.removeChannel(ch); }catch(e){} };
 }
 async function syncNow(){
-  if(!sync.db){ toast('Sync is off. Turn it on in Setup › Saving & sync.'); return; }
+  if(!sync.db){ toast('Sync is off. Turn it on in Settings › Saving & sync.'); return; }
   setSync('syncing'); const n=await discoverMeets(true); await pull(); toast(n?n+' new meet'+(n===1?'':'s')+' found':'Up to date');
 }
 async function refreshCore(){ if(!sync.db||S.demo||sync.busy) return; try{ const rs=await withTimeout(ref('core').get()); if(rs.exists) await adoptCore(rs.data()); }catch(e){} }
@@ -1611,7 +1695,7 @@ function history(swId){
 function priorBest(swId,ev,course,excludeId,beforeAt,practice){
   let best=null;
   for(const h of history(swId)){ if(!!h.practice!==!!practice||(h.e.id===excludeId&&!(beforeAt&&h.at<beforeAt))||h.time==null||h.key!==eventKey(ev)||h.course!==course) continue; if(h.time<ev.dist*0.2) continue; /* ignore test taps */ if(beforeAt&&h.at>beforeAt) continue; if(best==null||h.time<best.time) best=h; }
-  // practice swims also compare against best times typed or pasted in Setup
+  // practice swims also compare against best times typed or pasted in Settings
   if(practice){ const sm=swimmer(swId); const t=sm&&sm.times&&sm.times[TKEY(ev.dist,ev.stroke,course)];
     if(t!=null&&(best==null||t<best.time)) best={time:t,entered:true,m:{name:'Entered best',id:null},e:{id:null},ev,course,at:0,key:eventKey(ev)}; }
   return best;
@@ -1621,22 +1705,36 @@ function priorBest(swId,ev,course,excludeId,beforeAt,practice){
 function render(){ paintSpace();
   const wel=needsWelcome(); document.body.classList.toggle('welcoming',wel);
   if(wel){ $('#main').innerHTML=`<div class="view">${viewWelcome()}</div>`; return; }
-  document.querySelectorAll('.nav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.v===UI.tab)));
+  if(UI.kiosk) UI.tab='display';
+  else if(UI.tab!=='setup'){ if(CARD_IDS.includes(UI.tab)&&!UI.table.includes(UI.tab)){ UI.table.push(UI.tab); saveTable(); } if(!UI.table.includes(UI.tab)) UI.tab=UI.table[UI.table.length-1]||''; }
+  if(UI.tab&&UI.tab!=='setup') UI.lastCard=UI.tab;
+  paintHand();
   const m=M(); $('#meetname').textContent=m?(m.name||'Untitled meet'):'';
   paintSync();
   const main=$('#main');
   let h='';
-  if(S.demo&&UI.tab!=='display') h+=`<div class="banner"><span><b>Demo meet.</b> Made-up swimmers and cuts so you can try things. Load your heat sheet in Setup.</span><button class="btn sm" data-act="clear-demo">Clear demo</button></div>`;
-  if(!localOK&&!sync.db&&UI.tab!=='display') h+=`<div class="banner"><span><b>Not saving.</b> This browser is blocking storage, so a reload loses today's times. Don't use a private tab, and turn off Brave Shields for this site.</span></div>`;
-  else if(!localOK&&sync.db&&UI.tab!=='display') h+=`<div class="banner"><span><b>Only saving online.</b> This browser won't keep data on the phone, so times are safe only while you have signal. Turn off Brave Shields for this site.</span></div>`;
-  if(UI.tab==='meet') h+=viewMeet(m); else if(UI.tab==='records'||UI.tab==='swimmers') h+=viewRecords(); else if(UI.tab==='display') h+=viewDisplay(m); else if(UI.tab==='attend') h+=viewAttend(); else h+=viewSetup(m);
-  if(UI.kiosk) UI.tab='display';
+  if(S.demo&&!UI.kiosk) h+=`<div class="banner"><span><b>Demo meet.</b> Made-up swimmers and cuts so you can try things. Load your heat sheet in Settings.</span><button class="btn sm" data-act="clear-demo">Clear demo</button></div>`;
+  if(!localOK&&!sync.db&&!UI.kiosk) h+=`<div class="banner"><span><b>Not saving.</b> This browser is blocking storage, so a reload loses today's times. Don't use a private tab, and turn off Brave Shields for this site.</span></div>`;
+  else if(!localOK&&sync.db&&!UI.kiosk) h+=`<div class="banner"><span><b>Only saving online.</b> This browser won't keep data on the phone, so times are safe only while you have signal. Turn off Brave Shields for this site.</span></div>`;
+  const wide=isWide(), tmode=tableMode(); UI.wasWide=wide;
+  if(UI.kiosk) h+=`<div class="tbody flow">${viewDisplay(m)}</div>`;
+  else if(UI.tab==='setup') h+=`<div class="set-h"><h1>Settings</h1><button class="btn" data-act="tab" data-v="${esc(UI.lastCard||'')}">${IC('<path d="M15 18l-6-6 6-6"/>')} Back to the table</button></div><div class="tbody flow"><div class="view">${viewSetup(m)}</div></div>`;
+  else if(!UI.table.length) h+=`<div class="table-empty"><div class="te-in"><h2>Your table is clear</h2><p>Tap a card at the bottom to put it on the table${wide?', or drag it up here. Put down as many as you want and they share the screen':''}.</p></div></div>`;
+  else if(tmode){ const n=UI.table.length; const cols=n<=3?n:n===4?2:n<=6?3:n<=8?4:n===9?3:4;
+    h+=`<div class="table" style="--tc:${cols}">${UI.table.map(id=>tileHTML(id,m,true)).join('')}</div>`; }
+  else { const id=UI.tab; const i=UI.table.indexOf(id);
+    h+=`<div class="pdots">${UI.table.length>1?UI.table.map(x=>`<button data-act="tab" data-v="${x}" aria-current="${x===id}">${esc(cardName(x))}</button>`).join(''):''}</div>`;
+    h+=tileHTML(id,m,false); }
   document.body.classList.toggle('kiosk',!!UI.kiosk); document.body.classList.toggle('nosetup',!!UI.hideSetup);
-  main.classList.toggle('wide',UI.tab==='display'); main.classList.toggle('recwide',UI.tab==='records'); main.classList.toggle('meetwide',UI.tab==='meet'); main.classList.toggle('attwide',UI.tab==='attend'); document.body.classList.toggle('dispmode',UI.tab==='display');
+  document.body.classList.toggle('tablemode',tmode&&UI.table.length>0); document.body.classList.toggle('settingsmode',UI.tab==='setup'); document.body.classList.toggle('dispmode',!!UI.kiosk);
+  main.classList.toggle('wide',!!UI.kiosk);
+  { const tp=document.querySelector('header.top'); if(tp) document.documentElement.style.setProperty('--hdr',tp.offsetHeight+'px'); }
   const fb=$('#fsbtn'); if(fb) fb.hidden=!document.fullscreenEnabled;
+  const keep={}; main.querySelectorAll('.tbody[data-card]').forEach(t=>{ keep[t.dataset.card]=[t.scrollTop,t.scrollLeft]; });
   main.innerHTML=`<div class="view">${fixBFreeBanner()}${fixB2Banner()}${h}</div>`;
+  main.querySelectorAll('.tbody[data-card]').forEach(t=>{ const k=keep[t.dataset.card]; if(k){ t.scrollTop=k[0]; t.scrollLeft=k[1]; } });
   { const rb=main.querySelector('.rnav [aria-pressed="true"]'); if(rb){ const nv=rb.parentNode; nv.scrollLeft=Math.max(0,rb.offsetLeft-nv.offsetLeft-(nv.clientWidth-rb.offsetWidth)/2); } }
-  if(UI.tab==='display'){ try{ checkNewRecords(); }catch(e){} startDispTick(); fitDisplay(); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fitDisplay); }
+  if(cardShown('display')){ try{ checkNewRecords(); }catch(e){} startDispTick(); fitDisplay(); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fitDisplay); }
 }
 
 /* ---------- Meet tab home: what's going on today ---------- */
@@ -1698,7 +1796,7 @@ function viewMeet(m){
   const seenHeat=new Set(nextE?[nextE.hk]:[]); const cards=[];
   for(const e of upcoming){ if(cards.length>=3) break; if(seenHeat.has(e.hk)) continue; seenHeat.add(e.hk); cards.push(ents.filter(x=>x.hk===e.hk&&!['done','past'].includes(status(m,idx,est,x).st))); }
   h+=`<section class="stack"><div class="sec-h"><h2>Coming up</h2><span class="small muted">${upcoming.length} swims left</span></div>`;
-  if(!cards.length) h+=`<div class="card empty" style="padding:18px">${!ents.length?'None of your roster was found in this heat sheet. Check names in Setup.':upcoming.length?'Nothing else after this heat.':'Everyone has swum. Nice meet. Tap Finish meet to see results.'}</div>`;
+  if(!cards.length) h+=`<div class="card empty" style="padding:18px">${!ents.length?'None of your roster was found in this heat sheet. Check names in Settings.':upcoming.length?'Nothing else after this heat.':'Everyone has swum. Nice meet. Tap Finish meet to see results.'}</div>`;
   else { h+='<div class="upnext">'; for(const grp of cards){ const e=grp[0], i=idx[e.hk], hh=m.heats[i], ev=m.events[hh.ev], st=status(m,idx,est,e);
       const names=grp.map(x=>x.relay?'Relay '+esc(x.team||''):esc(x.swimmers.map(swName).join(', '))).join(' · ');
       const lanes=grp.map(x=>x.lane!=null?'L'+x.lane:'L?').join(', ');
@@ -1911,10 +2009,10 @@ function viewDisplay(m){
   const live=sync.db?(sync.status==='offline'?'<span class="chip blocks">Offline · will catch up</span>':`<span class="chip done">Live · v${APP_V}</span>`):`<span class="chip later">Not live on this device · v${APP_V}</span>`;
   const dm=(UI.dispMode==='records'?'times':UI.dispMode)||'times'; // Records lives on its own page now
   const head=`<div class="disp-head"><div><div class="eyebrow">${esc(m?m.name:'Deckside')}</div></div><div class="row"><span class="segs" role="group" aria-label="Show"><button data-act="disp-mode" data-v="times" aria-pressed="${dm==='times'&&!(m&&m.board)}">Times</button>${m?`<button data-act="disp-mode" data-v="board" aria-pressed="${dm==='board'&&!m.board}">Board</button>`:''}${m&&m.plan?`<button data-act="disp-mode" data-v="heats" aria-pressed="${!!(m.board&&m.board.mode==='heats')}">Heats</button>`:''}${m&&m.practice?`<button data-act="disp-mode" data-v="drops" aria-pressed="${dm==='drops'&&!m.board}">Drops</button>`:''}<button data-act="disp-mode" data-v="goal" aria-pressed="${dm==='goal'&&!(m&&m.board)}">Goal</button></span>${live}${UI.updReady?'<button class="btn upd-now" data-act="app-update">New version ready · tap to update</button>':''}${isFullScreen()?'':'<button class="btn sm" data-act="fullscreen">Full screen</button>'}${UI.kiosk?`<button class="btn sm ${UI.armed==='kiosk-exit'?'danger armed':''}" data-act="kiosk-exit">${UI.armed==='kiosk-exit'?'Tap again to exit':'Exit board'}</button>`:`<button class="btn sm" data-act="kiosk-on">Board mode</button>`}</div></div>`;
-  if(UI.kiosk&&!sync.db) return `<div class="disp" style="gap:16px">${head}<div class="card empty"><h3>Not connected to your phone</h3><p>To show live times here, turn on sync in Setup on this device and on your phone, with the same email and password. Tap Exit board to get to Setup.</p></div></div>`;
+  if(UI.kiosk&&!sync.db) return `<div class="disp" style="gap:16px">${head}<div class="card empty"><h3>Not connected to your phone</h3><p>To show live times here, turn on sync in Settings on this device and on your phone, with the same email and password. Tap Exit board to get to Settings.</p></div></div>`;
   const dempty=(t,x)=>`<section class="dboard dempty"><h2>${t}</h2><p>${x}</p></section>`;
   const wait=dempty('Waiting for the first set','Leave this screen open. Times show up here as you time on your phone.');
-  const note=sync.db?'':'<p class="hint">Live updates need sync turned on in Setup on both the phone and this computer, with internet on both.</p>';
+  const note=sync.db?'':'<p class="hint">Live updates need sync turned on in Settings on both the phone and this computer, with internet on both.</p>';
   const wrap=inner=>`<div class="disp" id="disp">${head}${inner}${note}</div>`;
   if(dm==='drops'&&m&&m.practice&&!m.board){ const t=dropsTable(m,2); return wrap(t?`<section class="dboard tbl-wrap"><h2>Time dropped today</h2>${dropsTally(m)}${t}</section>`:dempty('No drops yet','Drops show up once swimmers with an earlier best time race today.')); }
   if(dm==='board'&&m&&!m.board){ const t=boardTable(m,2,true,{cuts:true}); return wrap(t?`<section class="dboard tbl-wrap fullboard"><h2>Today's board</h2>${t}</section>`:dempty('No times yet','Times show up here as soon as the first heat finishes.')); }
@@ -1973,12 +2071,13 @@ function viewDisplay(m){
 }
 /* shrink or grow the display text so everything fits on one screen */
 function fitDisplay(){
-  const el=document.getElementById('disp'); if(!el||UI.tab!=='display') return;
+  const el=document.getElementById('disp'); if(!el||!cardShown('display')) return;
   const body=el.querySelector('.disp-body');
   const two=body&&body.children.length>1; if(body&&body.classList.contains('split')) body.dataset.split='1';
   const nav=document.querySelector('.nav'); const navH=UI.kiosk?0:(nav?nav.getBoundingClientRect().height:0);
   el.style.height='auto';
-  const avail=window.innerHeight-el.getBoundingClientRect().top-navH-(document.fullscreenElement||UI.kiosk?10:20);
+  const tb=el.closest('.tile .tbody');
+  const avail=tb&&document.body.classList.contains('tablemode')?Math.max(120,tb.clientHeight-(el.getBoundingClientRect().top-tb.getBoundingClientRect().top+tb.scrollTop)-14):window.innerHeight-el.getBoundingClientRect().top-navH-(document.fullscreenElement||UI.kiosk?10:20);
   let nmChk=true; el.classList.remove('nmwrap');
   const fits=fs=>{ el.style.setProperty('--fs',fs+'px'); return el.scrollHeight<=avail+1&&el.scrollWidth<=el.clientWidth+1&&[...el.querySelectorAll('.dboard,.latest,.dl-names,.dheats-top'+(nmChk?',.lt-nm':''))].every(d=>d.scrollWidth<=d.clientWidth+1); };
   const best=()=>{ let lo=6,hi=120; for(let i=0;i<16;i++){ const mid=(lo+hi)/2; if(fits(mid)) lo=mid; else hi=mid; } return lo; };
@@ -1986,7 +2085,7 @@ function fitDisplay(){
   if(dh){ const n=+dh.dataset.n; const opts=[...new Set([Math.min(n,4),Math.ceil(n/2),n>=3?3:n].filter(x=>x>=1))]; let bestFs=0,bestC=opts[0];
     for(const c of opts){ dh.style.setProperty('--hc',c); const f=best(); if(f>bestFs){ bestFs=f; bestC=c; } }
     dh.style.setProperty('--hc',bestC); lo=bestFs; }
-  else if(two){ body.classList.add('split'); const a=window.innerWidth>=900?best():0; body.classList.remove('split'); const b=best();
+  else if(two){ body.classList.add('split'); const a=el.clientWidth>=760?best():0; body.classList.remove('split'); const b=best();
     if(a>b){ body.classList.add('split'); lo=a; } else lo=b; }
   else lo=best();
   // full names on one line if that doesn't shrink the board much; otherwise let long names wrap
@@ -1994,13 +2093,13 @@ function fitDisplay(){
   el.style.setProperty('--fs',(Math.floor(lo*100)/100)+'px');
   el.style.height=avail+'px';
 }
-window.addEventListener('resize',()=>{ clearTimeout(window.__fitT); window.__fitT=setTimeout(()=>{ if(UI.tab==='display'&&!!document.querySelector('.disp [data-act=fullscreen]')===isFullScreen()) render(); else fitDisplay(); },150); });
+window.addEventListener('resize',()=>{ clearTimeout(window.__fitT); window.__fitT=setTimeout(()=>{ if(isWide()!==UI.wasWide&&!UI.kiosk) render(); else if(cardShown('display')&&!!document.querySelector('.disp [data-act=fullscreen]')===isFullScreen()) render(); else fitDisplay(); },150); });
 function isFullScreen(){ return !!document.fullscreenElement||(window.matchMedia&&matchMedia('(display-mode: fullscreen)').matches)||(innerHeight>=screen.height-2&&innerWidth>=screen.width-2); }
-document.addEventListener('fullscreenchange',()=>setTimeout(()=>{ UI.tab==='display'?render():fitDisplay(); },120));
+document.addEventListener('fullscreenchange',()=>setTimeout(()=>{ cardShown('display')?render():fitDisplay(); },120));
 let dispTick=null;
 function startDispTick(){
   if(dispTick) return;
-  dispTick=setInterval(()=>{ if(UI.tab!=='display'){ clearInterval(dispTick); dispTick=null; return; }
+  dispTick=setInterval(()=>{ if(!cardShown('display')){ clearInterval(dispTick); dispTick=null; return; }
     document.querySelectorAll('[data-dclock]').forEach(el=>{ el.textContent=fmt(Math.max(0,Date.now()-(+el.dataset.dclock))/1000); }); },100);
 }
 function sheetBoard(m){
@@ -2009,7 +2108,7 @@ function sheetBoard(m){
   if(!m) body=`<div class="empty"><h3>Waiting for the first set</h3><p>Start timing on your phone. This screen fills in by itself.</p></div>`;
   else { const t=m.practice?boardTable(m):meetResultsTable(m); body=t?`<div class="card tbl-wrap bigboard">${t}</div>`:`<div class="empty"><h3>Waiting for the first set</h3><p>Start timing on your phone. This screen fills in by itself.</p></div>`; }
   const h=`<div class="row" style="justify-content:space-between"><div><div class="eyebrow">${esc(m?m.name:'')}</div></div>${live}</div>${body}
-    ${sync.db?'':'<p class="hint">Live updates need sync turned on in Setup on both the phone and this computer, with internet on both.</p>'}`;
+    ${sync.db?'':'<p class="hint">Live updates need sync turned on in Settings on both the phone and this computer, with internet on both.</p>'}`;
   return ['Board',h];
 }
 function boardText(m){
@@ -2022,7 +2121,7 @@ function boardText(m){
 function sheetQuick(){
   const q=UI.quick;
   q.strokes=q.strokes||['FL','BK','BR','FR']; q.heats=q.heats||4; q.lanes=q.lanes||5; q.sendoff=q.sendoff??10;
-  if(!S.roster.length) return ['Practice timer',`<div class="card empty"><h3>No roster yet</h3><p>Add your swimmers in Setup first.</p><button class="btn primary" data-act="tab" data-v="setup">Go to Setup</button></div>`];
+  if(!S.roster.length) return ['Practice timer',`<div class="card empty"><h3>No roster yet</h3><p>Add your swimmers in Settings first.</p><button class="btn primary" data-act="tab" data-v="setup">Go to Settings</button></div>`];
   const seg=(act,vals,cur,lab)=>`<div class="segs" role="group" aria-label="${lab}">${vals.map(([v,t])=>`<button data-act="${act}" data-v="${v}" aria-pressed="${Array.isArray(cur)?cur.includes(v):String(v)===String(cur)}">${t}</button>`).join('')}</div>`;
   const cap=planCapacity(q.heats,q.lanes);
   const nag=!S.curGrp&&UI.grpNag;
@@ -2047,7 +2146,7 @@ function sheetQuick(){
   return ['Practice timer',h];
 }
 /* attendance: one list of who was there per day; today's list is also who the practice timer uses */
-function attDate(){ return (UI.tab==='attend'&&!UI.sheet&&UI.attDate)||todayISO(); }
+function attDate(){ return (cardShown('attend')&&!UI.sheet&&UI.attDate)||todayISO(); }
 /* removed swimmers (left the team) stay in S.roster with out:true so their past times keep their names; they're hidden everywhere else */
 function team(){ return S.roster.filter(s=>!s.out); }
 /* who's picked in the practice timer: today's attendance, except in Test mode, where picks never touch attendance */
@@ -2260,7 +2359,7 @@ function sheetLineup(){
   let h=`<div class="card stack"><div class="eyebrow">${rows.length} swimmers · ${esc(planLabel(L))} · ${esc(L.course)}</div>
     <p class="hint" style="margin:0">${same?'Random heats. Same heat and lane for every stroke.':'Seeded from past times, fastest heat first, with each stroke seeded on its own. Fastest swimmers get the middle lanes.'} Second swimmers in a lane leave ${L.sendoff} seconds after the first.</p>
     ${!same&&st==='IM'?`<p class="hint" style="margin:0"><b>IM:</b> each time shown is that swimmer's fly + back + breast + free, each counted as one ${distFor(L,'IM')/4} of the IM.</p>`:''}
-    ${!same&&nNT?(st==='IM'?`<p class="hint" style="margin:0">${nNT} swimmer${nNT===1?' is':'s are'} missing a stroke time, so they're in the last heats: ${rows.filter(r=>!tm[r.id]).map(r=>esc(shortName(r.id))+' (no '+imMissing(r.id,distFor(L,'IM'),L.course).map(x=>STROKE_NAME[x]).join(', ')+')').join(', ')}.</p>`:`<p class="hint" style="margin:0">${nNT} swimmer${nNT===1?' has':'s have'} no ${STROKE_NAME[st]} time yet (NT), so they're in the last heats. Add times on a swimmer's page or in Setup → Best times. ~ means estimated from another distance.</p>`):''}</div>`;
+    ${!same&&nNT?(st==='IM'?`<p class="hint" style="margin:0">${nNT} swimmer${nNT===1?' is':'s are'} missing a stroke time, so they're in the last heats: ${rows.filter(r=>!tm[r.id]).map(r=>esc(shortName(r.id))+' (no '+imMissing(r.id,distFor(L,'IM'),L.course).map(x=>STROKE_NAME[x]).join(', ')+')').join(', ')}.</p>`:`<p class="hint" style="margin:0">${nNT} swimmer${nNT===1?' has':'s have'} no ${STROKE_NAME[st]} time yet (NT), so they're in the last heats. Add times on a swimmer's page or in Settings → Best times. ~ means estimated from another distance.</p>`):''}</div>`;
   if(!same&&L.strokes.length>1) h+=`<div class="row" style="justify-content:space-between"><span class="small muted">Heats for</span>${strokeTabs(L.strokes,st,'lu-st')}</div>`;
   h+=lineupHTML(rows,L.H,L.L,L.sendoff,same?null:tm);
   h+=`<div class="row"><button class="btn" data-act="lu-shuffle">${same?'Reshuffle':'Re-seed'}</button><button class="btn" data-act="lu-edit">Edit</button><button class="btn primary" data-act="lu-start" style="flex:1;min-height:56px;font-size:17px">Start practice</button></div>`;
@@ -2381,7 +2480,7 @@ function attTrendsHTML(){ const mk=UI.attMonth||monthOf(), grp=UI.attGrp||'all';
   h+=`<section class="stack"><div class="sec-h"><h2>Everyone</h2><span class="small muted">${T.rows.length} swimmers</span></div><div class="card at-list">${sorted.map(r=>`<button class="at-row" data-act="swimmer" data-v="${esc(r.s.id)}"><span class="at-nm"><b>${esc(nm(r.s))}</b><small>${r.s.group?'White '+esc(r.s.group):''}</small></span><span class="at-track"><span class="${r.pct>=0.9?'hi':r.pct<0.6?'lo':''}" style="width:${Math.round(r.pct*100)}%"></span></span><span class="at-n">${r.n}/${r.of}</span><span class="at-p">${Math.round(r.pct*100)}%</span></button>`).join('')}</div></section>`;
   return h+`<p class="hint">Each swimmer is compared with the practices their group had this month. Tap a name to see their progress.</p>`; }
 function viewAttend(){
-  if(!S.roster.length) return `<div class="card empty"><h3>No roster yet</h3><p>Add your swimmers in Setup first.</p><button class="btn primary" data-act="tab" data-v="setup">Go to Setup</button></div>`;
+  if(!S.roster.length) return `<div class="card empty"><h3>No roster yet</h3><p>Add your swimmers in Settings first.</p><button class="btn primary" data-act="tab" data-v="setup">Go to Settings</button></div>`;
   const d=UI.attDate||todayISO(); const isToday=d===todayISO(); const dt=new Date(d+'T12:00:00');
   const past=Object.keys(S.attendance||{}).sort().reverse().filter(x=>x!==d).slice(0,10);
   const acts=`<div class="att-acts"><button class="btn ${UI.attEdit?'primary':''}" data-act="att-edit">${UI.attEdit?'Done editing':'Edit list'}</button><button class="btn" data-act="copy-att">Copy attendance</button>${S.roster.some(s=>!s.group)?`<button class="btn" data-act="sheet" data-v="groups">Set A / B groups</button>`:`<button class="btn" data-act="sheet" data-v="groups">Edit groups</button>`}${isToday?'':'<button class="btn ghost" data-act="att-date" data-v="">Back to today</button>'}</div>`;
@@ -2411,7 +2510,7 @@ function sheetGroups(){
   h+=`<p class="hint grp-none" ${q&&!list.some(s=>norm(s.first+' '+s.last+' '+(s.nick||'')).includes(q))?'':'hidden'}>No swimmer matches that.</p>`;
   return ['White A / White B',h+'</div>'];
 }
-/* the five fastest in every event, per group (best times entered in Setup plus every real swim) */
+/* the five fastest in every event, per group (best times entered in Settings plus every real swim) */
 function testSetsNote(){ let sets=0; const days=[];
   for(const id of allMeetIds()){ const m=S.meets[id]; if(!m||m.canceled||!m.heats) continue; let n=0;
     for(const hh of m.heats){ if(!(m.test||hh.test)) continue; if(m.entries.some(e=>e.hk===hh.k&&m.swims&&m.swims[e.id]&&m.swims[e.id].time!=null)) n++; }
@@ -2451,7 +2550,7 @@ function viewGoal(){ const mk=UI.goalMonth||monthOf(); const grp=UI.goalGrp||'al
   h+=`<div class="best-bar"><div class="rfilter">${[['all','All'],['A','White A'],['B','White B']].map(([x,t])=>`<button data-act="goal-grp" data-v="${x}" aria-pressed="${grp===x}">${t}</button>`).join('')}</div><span class="small muted">Goal <button class="btn sm ghost" data-act="goal-pct" data-v="-5" aria-label="Lower goal">−</button><b>${g.target}%</b><button class="btn sm ghost" data-act="goal-pct" data-v="5" aria-label="Raise goal">+</button></span></div>`;
   h+=`<section class="stack"><div class="sec-h"><h2>Dropped time</h2><span class="small muted">${g.hit.length}</span></div>${g.hit.length?`<div class="ghits">${g.hit.map(x=>`<button class="ghit" data-act="swimmer" data-v="${esc(x.s.id)}"><span class="gh-n"><b>${esc((x.s.nick||x.s.first)+' '+x.s.last)}</b><small>${x.s.group?'White '+esc(x.s.group)+' · ':''}${x.n} drop${x.n===1?'':'s'}</small></span><span class="gh-d"><b>−${fmtSec(x.best.drop)}</b><small>${esc(x.best.ev.dist+' '+STROKE_NAME[x.best.ev.stroke])}</small></span></button>`).join('')}</div>`:'<div class="card empty"><p style="margin:0">No drops yet this month. They show up here after a practice meet day or a meet.</p></div>'}</section>`;
   if(g.miss.length) h+=`<section class="stack"><div class="sec-h"><h2>Still chasing a drop</h2><span class="small muted">${g.miss.length}</span></div><div class="gmiss">${g.miss.map(x=>`<button class="${x.raced?'':'noraced'}" data-act="swimmer" data-v="${esc(x.s.id)}">${esc((x.s.nick||x.s.first)+' '+x.s.last)}${x.raced?'':' <small>no races yet</small>'}</button>`).join('')}</div></section>`;
-  return h+`<p class="hint">Counts swimmers who came to practice or raced this month. A drop is any race this month (practice meet day or meet) faster than that swimmer's best from before that day, including the best times entered in Setup. Test sets don't count.</p>`; }
+  return h+`<p class="hint">Counts swimmers who came to practice or raced this month. A drop is any race this month (practice meet day or meet) faster than that swimmer's best from before that day, including the best times entered in Settings. Test sets don't count.</p>`; }
 function fmtSec(x){ return x>=60?fmt(x):x.toFixed(2); }
 function viewTop5(){
   const cat=UI.topCat||'AM'; const grp=cat[0], g=cat[1];
@@ -2466,7 +2565,7 @@ function viewTop5(){
       if(!rows.some(x=>x.rec&&x.name===r.name&&x.t===r.time)) rows.push({name:r.name,t:r.time,rec:true}); }
     const list=rows.sort((a,b)=>a.t-b.t).slice(0,5);
     h+=`<div class="t5card"><div class="t5h">${esc(nm)}</div>${list.length?`<ol>${list.map((x,i)=>`<li class="${i===0?'first':''} m${i+1} ${x.id?'tap':''}" ${x.id?`data-act="swimmer" data-v="${esc(x.id)}"`:''}><span class="t5r">${i+1}</span><span class="t5n">${esc(x.name)}${x.rec?' <span class="t5rec">REC</span>':''}</span><span class="t5t">${fmt(x.t)}</span></li>`).join('')}</ol>`:'<p class="t5none">No times yet</p>'}</div>`; }
-  return h+'</div><p class="hint">Best times in short course yards, from the best times in Setup, every practice or meet swim, and the record board (REC). Old record holders who aren\'t on the roster are listed by the name on the record.</p></section>'; }
+  return h+'</div><p class="hint">Best times in short course yards, from the best times in Settings, every practice or meet swim, and the record board (REC). Old record holders who aren\'t on the roster are listed by the name on the record.</p></section>'; }
 /* one-time fix (Oct 2026): times under 30 seconds in a 50 or longer were mis-taps. Clear them once, everywhere. */
 function cleanupSub30(){
   if(S.fix30||S.demo) return; const now=Date.now(); let n=0;
@@ -2516,14 +2615,14 @@ function viewBest(){
     h+=`<div class="bestrow bcard tap" role="button" tabindex="0" data-act="swimmer" data-v="${esc(s.id)}" data-name="${esc(key)}" ${q&&!key.includes(q)?'hidden':''}><div class="bc-h"><b>${esc((s.nick||s.first)+' '+s.last)}</b><span class="small muted">${s.group?'White '+esc(s.group)+' · ':''}${s.gender==='F'?'girl':s.gender==='M'?'boy':''}${s.age?', '+s.age:''}</span></div>
       ${ks.length?`<div class="bc-times">${ks.map(x=>{ const c=cutFor(s.id,{dist:x.d,stroke:x.st,course:'SCY'},'SCY',x.t); return `<div class="bc-t"><span class="bc-ev">${x.d} ${esc(STROKE_NAME[x.st])}</span><span class="bc-v"><b>${fmt(x.t)}</b>${c?`<span class="qcut">${esc(c.name)}</span>`:''}</span></div>`; }).join('')}</div>`:'<p class="bc-none">No times yet</p>'}</div>`; }
   h+='</div>'; if(none.length) h+=`<div class="bc-nonelist"><span class="ropen-l">No times yet · ${none.length}</span><span class="ropen-c">${none.map(([s,key])=>`<span class="bestrow" data-name="${esc(key)}" ${q&&!key.includes(q)?'hidden':''}>${esc((s.nick||s.first)+' '+s.last)}</span>`).join('')}</span></div>`;
-  return h+'<p class="hint">Best time in each short course yards event, from the best times in Setup and every practice or meet swim. Test sets don\'t count.</p></section>'; }
+  return h+'<p class="hint">Best time in each short course yards event, from the best times in Settings and every practice or meet swim. Test sets don\'t count.</p></section>'; }
 /* one-time fix (Oct 2026): a 50 or 100 over 3:30 is a timer left running. Clear those once, everywhere. */
 /* one-time fix (Oct 24 2026): White B freestyle "old times" were wrong, so every drop against them was fake.
    For each White B swimmer who showed a freestyle drop on a meet day (up to Oct 24), remove the times that drop was
-   measured against: the time entered in Setup and earlier swims in that event. Keeps a log so it can be undone. */
+   measured against: the time entered in Settings and earlier swims in that event. Keeps a log so it can be undone. */
 const FIXB_CUTOFF='2026-10-24';
 /* one-time fix (Nov 3 2026): five White B swimmers had wrong old 50 Free times, so Nov 1 showed fake gains.
-   Remove their 50 Free times from before Nov 1 (entered in Setup or swum earlier). For Anaisha and Arha the coach
+   Remove their 50 Free times from before Nov 1 (entered in Settings or swum earlier). For Anaisha and Arha the coach
    confirmed a 2.00 drop on Nov 1, so their best before that day is set to Nov 1 time + 2.00. Logged so it can be undone. */
 const FIXB2_DAY='2026-11-01', FIXB2=[['Anaisha','S',2],['Arha','H',2],['Erica','X',null],['Owen','Z',null],['Yukti','M',null]];
 function cleanupBFree2(){
@@ -2604,6 +2703,8 @@ function viewRecords(){
   if(UI.recTab==='top') return top+viewTop5();
   if(UI.recTab==='best') return top+viewBest();
   if(UI.recTab==='rank') return top+viewRank();
+  return top+viewRecBoard(); }
+function viewRecBoard(){ const top='';
   const v=UI.recView||'all', rk=UI.recKind||'meet'; const b=recordBoard(rk); const fresh=Date.now()-7*864e5;
   const cats=v==='all'?REC_CATS:REC_CATS.filter(c=>c[0]===v);
   const all=Object.values(b); const setN=cats.reduce((n,[g,sx])=>n+REC_EVENTS.filter(([k])=>b[g+sx+'|'+k]).length,0), totN=cats.length*REC_EVENTS.length;
@@ -2621,9 +2722,8 @@ function viewRecords(){
   return h+'</section>';
 }
 function viewSwimmers(){
-  let h=`<section class="stack"><div class="sec-h"><h2>Record board</h2><button class="btn sm" data-act="go-records">Edit in Setup</button></div><div class="card tbl-wrap" style="padding:6px">${recordGrid(false)}</div></section>`;
-  h+=`<section class="stack"><div class="sec-h"><h2>Swimmers</h2><button class="btn sm" data-act="sheet" data-v="roster">Edit roster</button></div>`;
-  if(!S.roster.length) return h+`<div class="card empty"><h3>No roster yet</h3><p>Paste your group's names in Setup.</p></div></section>`;
+  let h=`<section class="stack"><div class="sec-h"><h2>Swimmers</h2><button class="btn sm" data-act="sheet" data-v="roster">Edit roster</button></div>`;
+  if(!S.roster.length) return h+`<div class="card empty"><h3>No roster yet</h3><p>Paste your group's names in Settings.</p></div></section>`;
   const m=M();
   h+='<div class="list plist">';
   for(const s of [...S.roster].sort((a,b)=>a.last.localeCompare(b.last))){
@@ -2678,7 +2778,7 @@ function quickSetup(){
   UI.qsOpen=true; save('core'); render();
   const o=$('#qs-result'); if(o) o.innerHTML=`<p class="small" style="margin:0"><b>Loaded:</b> ${S.roster.length} swimmers on the roster (${r.added} new${r.updated?', '+r.updated+' updated':''}) · ${t.set} times · ${rc.n} records${nStd?' · '+nStd+' qualifying times':''}.${t.miss.length?` Couldn't match times for: ${t.miss.slice(0,10).map(esc).join(', ')}${t.miss.length>10?'…':''}.`:''}${r.bad+t.bad.length+rc.bad.length?` ${r.bad+t.bad.length+rc.bad.length} lines skipped.`:''}</p>`;
   const ta=$('#qs-text'); if(ta&&!t.miss.length) ta.value='';
-  toast('Setup loaded');
+  toast('Loaded');
 }
 function setupText(){
   const ros=[...S.roster].sort((a,b)=>a.last.localeCompare(b.last)||a.first.localeCompare(b.first)).map(s=>`${s.last}, ${s.first}${s.nick?' ('+s.nick+')':''}${s.gender?', '+s.gender:''}${s.age?', '+s.age:''}${s.group?', White '+s.group:''}`);
@@ -2712,7 +2812,6 @@ function viewSetup(m){
   // the few things used day to day
   h+=recConfirmHTML(pendingRecords());
   h+=`<div class="setup-line"><span><b>Appearance</b> <span class="small muted">Just this device</span></span><span class="segs" role="group" aria-label="Appearance">${[['auto','Auto'],['light','Light'],['dark','Dark']].map(([x,t])=>`<button data-act="theme-set" data-v="${x}" aria-pressed="${themePref()===x}">${t}</button>`).join('')}</span></div>`;
-  h+=`<div class="setup-line"><span><b>Setup tab</b> <span class="small muted">${UI.hideSetup?'Hidden from the bottom bar. Get here with the gear at the top.':'Rarely use it? Hide it from the bottom bar.'}</span></span><button class="btn sm" data-act="hide-setup">${UI.hideSetup?'Show the tab':'Hide the tab'}</button></div>`;
   h+=`<section class="card stack" style="gap:10px"><div class="row" style="justify-content:space-between"><span class="eyebrow">This practice</span>${practiceGrpSegs()}</div>
     <div class="row" style="justify-content:space-between"><span class="small">${sync.db?`<b style="color:var(--good)">Sync is on</b> <span class="muted">${esc(sync.email||'')}</span>`:'<b style="color:var(--bad)">Sync is off</b> <span class="muted">· open Saving &amp; sync below</span>'}</span><button class="btn sm" data-act="kiosk-on">Make this the display board</button></div></section>`;
   // everything else folds away
@@ -3256,7 +3355,17 @@ document.addEventListener('click',async ev=>{
   if(b.tagName==='INPUT'&&b.type==='checkbox') return; // handled on change
   const act=b.dataset.act, v=b.dataset.v, m=M();
   switch(act){
-    case 'tab': UI.tab=v; UI.attEdit=false; try{localStorage.setItem(LS+'.tab',v);}catch(e){} if(UI.sheet){UI.sheet=null;$('#sheet').hidden=true;} render(); window.scrollTo(0,0); break;
+    case 'tab': UI.attEdit=false; if(v==='setup') UI.tab='setup'; else if(CARD_IDS.includes(v)) putDown(v); else UI.tab=UI.table[UI.table.length-1]||''; try{localStorage.setItem(LS+'.tab',UI.tab);}catch(e){} if(UI.sheet){UI.sheet=null;$('#sheet').hidden=true;} render(); window.scrollTo(0,0); break;
+    case 'card': { if(UI.sheet){UI.sheet=null;$('#sheet').hidden=true;} UI.attEdit=false;
+      const on=UI.table.includes(v);
+      if(!on) putDown(v);
+      else if(UI.tab==='setup'){ UI.tab=v; saveTable(); }
+      else if(!isWide()&&UI.tab!==v){ UI.tab=v; saveTable(); }
+      else sendUp(v);
+      render(); if(!isWide()) window.scrollTo(0,0);
+      if(!on&&isWide()) setTimeout(()=>{ const t=document.querySelector(`.tile[data-card="${v}"]`); if(t){ t.classList.add('landed'); setTimeout(()=>t.classList.remove('landed'),700); } },0);
+      break; }
+    case 'card-up': sendUp(v); render(); break;
     case 'close': UI.armed=null; closeSheet(); break;
     case 'sheet': openSheet({type:v}); break;
     case 'quick': { const lq=UI.lastQuick; let saved=[]; try{ saved=JSON.parse(localStorage.getItem(DK+'.picks')||'[]').filter(id=>swimmer(id)); }catch(e){}
@@ -3345,9 +3454,9 @@ document.addEventListener('click',async ev=>{
     case 'att-rm': { if(!arm('att-rm-'+v)){ render(); break; } const sm=swimmer(v); if(sm){ sm.out=Date.now(); for(const d in (S.attendance||{})) if(d>=todayISO()) S.attendance[d]=S.attendance[d].filter(x=>x!==v); } save('core'); render(); toast(swName(v)+' removed from the roster. Past times are kept.'); break; }
     case 'sw-back': { const sm=swimmer(v); if(sm){ delete sm.out; save('core'); } UI.sheet?renderSheet():null; render(); toast(swName(v)+' is back on the roster'); break; }
     case 'finish-meet': { if(!m||m.practice) break; const fin=v!=='0'; m.finished=fin; if(fin){ m.now=null; m.finishedAt=Date.now(); } else delete m.finishedAt; m.updatedAt=Date.now(); save(m.id); window.scrollTo(0,0); render(); toast(fin?'Meet finished. Everything is saved.':'Timing reopened.'); break; }
-    case 'close-day': { if(!m) break; const hadTest=m.test||m.heats.some(h=>h.test); S.testMode=false; const what=m.practice?(m.plan?'Race day':'Practice'):'Meet'; S.active=null; UI.lineup=null; UI.tab='meet'; save('core'); window.scrollTo(0,0); render(); toast(hadTest?what+' closed. Test sets are kept in Saved meets › Tests, and you can count them anytime.':what+' saved and closed. It\'s in Setup › Saved meets.'); break; }
+    case 'close-day': { if(!m) break; const hadTest=m.test||m.heats.some(h=>h.test); S.testMode=false; const what=m.practice?(m.plan?'Race day':'Practice'):'Meet'; S.active=null; UI.lineup=null; UI.tab='meet'; save('core'); window.scrollTo(0,0); render(); toast(hadTest?what+' closed. Test sets are kept in Saved meets › Tests, and you can count them anytime.':what+' saved and closed. It\'s in Settings › Saved meets.'); break; }
     case 'open-saved': { UI.tab='setup'; UI.secOpen.meets=true; if(UI.sheet){ UI.sheet=null; $('#sheet').hidden=true; } render(); setTimeout(()=>{ const el=document.querySelector('details[data-sec=meets]'); if(el) el.scrollIntoView({block:'start'}); },30); break; }
-    case 'gear': { UI.tab='setup'; if(UI.sheet){ UI.sheet=null; $('#sheet').hidden=true; } render(); window.scrollTo(0,0); break; }
+    case 'gear': { UI.tab=UI.tab==='setup'?(UI.lastCard||UI.table[UI.table.length-1]||''):'setup'; if(UI.sheet){ UI.sheet=null; $('#sheet').hidden=true; } render(); window.scrollTo(0,0); break; }
     case 'hide-setup': { UI.hideSetup=!UI.hideSetup; try{ localStorage.setItem(LS+'.hideSetup',UI.hideSetup?'1':'0'); }catch(e){} if(UI.hideSetup){ UI.tab='meet'; try{ localStorage.setItem(LS+'.tab','meet'); }catch(e){} toast('Setup is hidden. Tap the gear at the top to get back to it.'); } render(); break; }
     case 'att-view': UI.attView=v; UI.attEdit=false; render(); break;
     case 'att-month': { UI.attMonth=shiftMonth(UI.attMonth||monthOf(),+v); if(UI.attMonth>monthOf()) UI.attMonth=monthOf(); render(); break; }
@@ -3386,7 +3495,7 @@ document.addEventListener('click',async ev=>{
     case 'goal-month': { UI.goalMonth=shiftMonth(UI.goalMonth||monthOf(),+v); if(UI.goalMonth>monthOf()) UI.goalMonth=monthOf(); render(); break; }
     case 'goal-grp': UI.goalGrp=v; render(); break;
     case 'goal-pct': { S.goalPct=Math.max(10,Math.min(100,(S.goalPct||70)+(+v))); save('core'); render(); break; }
-    case 'rec-tab': UI.recTab=v; render(); break;
+    case 'rec-tab': putDown(v==='rec'?'records':v); render(); break;
     case 'open-tests': { UI.tab='setup'; UI.secOpen.meets=true; UI.storeCat='test'; render(); setTimeout(()=>{ const el=document.querySelector('details[data-sec=meets]'); if(el) el.scrollIntoView({block:'start'}); },30); break; }
     case 'rec-all': UI.recAll=true; UI.sheet?renderSheet():render(); break;
     case 'theme-toggle': { setTheme(isDark()?'light':'dark'); toast(isDark()?'Dark mode':'Light mode'); render(); break; }
@@ -3398,7 +3507,7 @@ document.addEventListener('click',async ev=>{
     case 'fixb-ok': UI.fixBFreeN=0; render(); break;
     case 'space-pick': openSheet({type:'spaces'}); break;
     case 'space-go': { if(v===SPACE.id){ closeSheet(); break; } try{ writeLocal(); localStorage.setItem('deckside.space',v); localStorage.setItem(LS+'.tab','meet'); }catch(e){} location.reload(); break; }
-    case 'go-goal': UI.tab='records'; UI.recTab='goal'; render(); window.scrollTo(0,0); break;
+    case 'go-goal': putDown('goal'); render(); if(!isWide()) window.scrollTo(0,0); break;
     case 'open-results': UI.rdraft={}; openSheet({type:'results'}); break;
     case 'res-save': { const d=UI.rdraft; if(!d||!d.parsed) break; const tgt=($('#res-target')||{}).value||''; const name=(($('#res-name')||{}).value||d.name||'Meet results').trim(); const date=($('#res-date')||{}).value||d.date;
       const D=applyResults(d.parsed,tgt,{name,date}); UI.rdraft={done:D}; renderSheet(); toast(D.n+' official times saved'); break; }
@@ -3896,7 +4005,7 @@ if('serviceWorker' in navigator){ window.addEventListener('load',()=>{ navigator
   const hadCtl=!!navigator.serviceWorker.controller; let pendingReload=false;
   const timing=()=>Object.values(S.meets||{}).some(m=>Object.values(m.timers||{}).some(T=>T&&T.t0&&!T.done));
   const tryReload=back=>{ if(!pendingReload) return;
-    if(UI.tab==='display'||UI.kiosk){ if(!document.fullscreenElement) appReload(); else if(!UI.updReady){ UI.updReady=true; render(); } }   // a reload would drop full screen: show a tap-to-update button instead
+    if(cardShown('display')||UI.kiosk){ if(!document.fullscreenElement) appReload(); else if(!UI.updReady){ UI.updReady=true; render(); } }   // a reload would drop full screen: show a tap-to-update button instead
     else if(back&&!timing()) appReload(); };   // phone: only when coming back to the app, never mid-heat
   navigator.serviceWorker.addEventListener('controllerchange',()=>{ if(!hadCtl) return; pendingReload=true; tryReload(false); });
   setInterval(()=>tryReload(false),15000);
@@ -3906,7 +4015,27 @@ function appReload(){ try{ sessionStorage.setItem('deckside.tab',UI.tab); }catch
 if(navigator.storage&&navigator.storage.persist){ navigator.storage.persist().catch(()=>{}); }
 window.addEventListener('online',()=>{ if(!sync.db&&hasSavedLogin()) initSync(); });
 if(/type=recovery/.test(location.hash)){ UI.wMode='reset'; UI.showWelcome=true; }
-setInterval(()=>{ if(!UI.sheet&&UI.tab==='meet'&&document.visibilityState==='visible'&&!document.activeElement.closest?.('input,textarea,select')) render(); },30000);
+/* drag cards: hand -> table puts a card down, tile -> tile swaps places, tile -> hand sends it back up */
+document.addEventListener('dragstart',e=>{ const t=e.target.closest&&e.target.closest('.tile-h[data-card],#hand [data-card]'); if(!t) return;
+  UI.dragCard=t.dataset.card; UI.dragFrom=t.closest('#hand')?'hand':'table'; try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',UI.dragCard); }catch(_){}
+  document.body.classList.add('dragging'); const tl=t.closest('.tile'); if(tl) setTimeout(()=>tl.classList.add('lifted'),0); });
+document.addEventListener('dragover',e=>{ if(!UI.dragCard) return; const tile=e.target.closest&&e.target.closest('.tile'); const tbl=e.target.closest&&e.target.closest('#main'); const hand=e.target.closest&&e.target.closest('.hand');
+  if(tile||tbl||(hand&&UI.dragFrom==='table')){ e.preventDefault(); }
+  document.querySelectorAll('.dropto').forEach(x=>{ if(x!==tile&&x!==hand) x.classList.remove('dropto'); }); if(tile&&tile.dataset.card!==UI.dragCard) tile.classList.add('dropto'); if(hand&&UI.dragFrom==='table') hand.classList.add('dropto'); });
+document.addEventListener('drop',e=>{ if(!UI.dragCard) return; e.preventDefault(); const from=UI.dragCard; const tile=e.target.closest&&e.target.closest('.tile'); const hand=e.target.closest&&e.target.closest('.hand');
+  if(hand){ if(UI.dragFrom==='table') sendUp(from); }
+  else if(tile){ const to=tile.dataset.card; if(to!==from){ const a=UI.table; const j=a.indexOf(to); const i=a.indexOf(from);
+      if(i<0) putDown(from,j); else { a[i]=to; a[j]=from; UI.tab=from; saveTable(); } } }
+  else if(e.target.closest&&e.target.closest('#main')) putDown(from);
+  UI.dragCard=null; document.body.classList.remove('dragging'); render(); });
+document.addEventListener('dragend',()=>{ document.body.classList.remove('dragging'); document.querySelectorAll('.dropto,.lifted').forEach(x=>x.classList.remove('dropto','lifted')); if(UI.dragCard){ UI.dragCard=null; render(); } });
+/* phones: swipe left or right to flip between the cards on the table */
+(()=>{ let sx=0,sy=0,ok=false;
+  const scrollsX=el=>{ for(;el&&el!==document.body;el=el.parentElement){ if(el.scrollWidth>el.clientWidth+2){ const o=getComputedStyle(el).overflowX; if(o==='auto'||o==='scroll') return true; } } return false; };
+  document.addEventListener('touchstart',e=>{ const t=e.touches[0]; ok=e.touches.length===1&&!isWide()&&!UI.kiosk&&!UI.sheet&&UI.tab!=='setup'&&UI.table.length>1&&!!e.target.closest('#main')&&!e.target.closest('input,textarea,select,.qpad,.lanes')&&!scrollsX(e.target); sx=t.clientX; sy=t.clientY; },{passive:true});
+  document.addEventListener('touchend',e=>{ if(!ok) return; ok=false; const t=e.changedTouches[0]; const dx=t.clientX-sx, dy=t.clientY-sy; if(Math.abs(dx)<80||Math.abs(dy)>Math.abs(dx)*0.6) return;
+    const i=UI.table.indexOf(UI.tab); const j=i+(dx<0?1:-1); if(j<0||j>=UI.table.length) return; UI.tab=UI.table[j]; saveTable(); render(); window.scrollTo(0,0); },{passive:true}); })();
+setInterval(()=>{ if(!UI.sheet&&cardShown('meet')&&!UI.dragCard&&document.visibilityState==='visible'&&!document.activeElement.closest?.('input,textarea,select')) render(); },30000);
 </script>
 
 </body>
