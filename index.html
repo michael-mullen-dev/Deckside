@@ -965,6 +965,40 @@ body:not(.tablemode) .tile>.tile-h{margin-bottom:10px}
 .tile-x .small{font-size:12px}
 .tile-x .btn{min-height:24px;padding:0 9px;font-size:12px;border-radius:7px}
 .table .tbody>.view>section.stack:first-child:empty{display:none}
+
+/* heats card */
+.hz-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.hz-ev{display:flex;flex-direction:column;gap:8px}
+.hz-ev h3{font-family:var(--display);text-transform:uppercase;font-size:20px;letter-spacing:.02em}
+.hz-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.hz{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.hz-h{display:flex;align-items:center;gap:8px;width:100%;border:0;background:var(--surface2);color:var(--ink);font:inherit;padding:7px 12px;cursor:pointer;text-align:left}
+.hz-h b{font-family:var(--display);text-transform:uppercase;font-size:16px;flex:1}
+.hz-s{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:2px 8px;border-radius:99px;background:var(--line);color:var(--ink)}
+.hz.run{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.hz.run .hz-s{background:var(--accent);color:#fff}
+.hz.next .hz-s{background:var(--blocks);color:var(--blocks-ink)}
+.hz.done{opacity:.75}
+.hz-l{display:grid;grid-template-columns:2em minmax(0,1fr) auto;align-items:center;gap:8px;padding:7px 12px;border-top:1px solid var(--line);cursor:pointer}
+.hz-n{font-family:var(--display);font-weight:700;font-size:18px;color:var(--muted);text-align:center}
+.hz-nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hz-nm .go10{margin-right:6px}
+.hz-t{font-variant-numeric:tabular-nums;font-weight:700}
+/* places card */
+.pl-ev{display:flex;flex-direction:column;gap:6px}
+.pl-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.pl-h h3{font-family:var(--display);text-transform:uppercase;font-size:20px;letter-spacing:.02em}
+.pl-list{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.pl-r{display:grid;grid-template-columns:2.2em minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 12px;border-top:1px solid var(--line);cursor:pointer}
+.pl-r:first-child{border-top:0}
+.pl-p{width:1.9em;height:1.9em;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;background:var(--surface2);color:var(--ink)}
+.pl-r.p1 .pl-p{background:#F4C430;color:#231900}
+.pl-r.p2 .pl-p{background:#C9D3DA;color:#14232E}
+.pl-r.p3 .pl-p{background:#D59562;color:#2A1606}
+.pl-nm{display:flex;flex-direction:column;min-width:0}.pl-nm b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pl-nm small{color:var(--muted);font-size:12px}
+.pl-t{display:flex;flex-direction:column;align-items:flex-end;font-variant-numeric:tabular-nums;font-weight:800;font-size:17px;line-height:1.15}
+.pl-t small{font-size:12px;font-weight:700}
+@container tile (min-width:700px){ .pl-wrap{display:grid} }
 </style>
 
 </head>
@@ -1277,6 +1311,8 @@ const CARDS=[
   ['rank','Rankings',IC('<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>')],
   ['goal','Goal',IC('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>')],
   ['attend','Attendance',IC('<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 12l2 2 4-4"/>')],
+  ['heats','Heats',IC('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16"/>')],
+  ['places','Places',IC('<path d="M9 21V11H4v10M15 21V5h-5v16M20 21v-7h-5v7"/>')],
   ['swimmers','Swimmers',IC('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0M16 4.5a3.5 3.5 0 010 7M21.5 20a6.5 6.5 0 00-4-6"/>')],
 ];
 const CARD_IDS=CARDS.map(c=>c[0]); const cardName=id=>(CARDS.find(c=>c[0]===id)||[,''])[1];
@@ -1301,6 +1337,8 @@ function cardBody(id,m){
     case 'goal': return viewGoal();
     case 'attend': return viewAttend();
     case 'swimmers': return viewSwimmers();
+    case 'heats': return viewHeats();
+    case 'places': return viewPlaces();
   } return ''; }
 function tileHTML(id,m,wide){
   let body=''; try{ body=cardBody(id,m); }catch(e){ console.error(e); body=`<div class="card empty"><p>This card hit a problem: ${esc(e.message||e)}</p></div>`; }
@@ -2749,6 +2787,54 @@ function viewRecBoard(){ const top='';
   h+=recent.length?`<div class="rbroke">${recent.map(r=>`<div class="rb1"><div class="rb-top"><span class="rb-t">${fmt(r.time)}</span><span class="rb-cat">${esc(recCatName(r.grp,r.g))} · ${esc(recEvName(r.ev))}</span></div><b class="rb-n">${esc(r.name)}</b><span class="small muted">${esc(recDate(r.date))}${r.was?' · was '+fmt(r.was.time)+' ('+esc(r.was.name)+')':' · first record'}</span><button class="btn sm ghost ${UI.armed==='unrec-'+r.eid?'armed':''}" data-act="rec-undo" data-v="${esc(r.mid+'|'+r.eid)}">${UI.armed==='unrec-'+r.eid?'Tap again to remove':'Not a record'}</button></div>`).join('')}</div>`:`<div class="card empty"><p style="margin:0">No records broken in the app yet. When someone breaks one at practice, you confirm it and it shows up here.</p></div>`;
   return h+'</section>';
 }
+const evTitle=(m,ev)=>!m.practice&&ev.title?(ev.num?'#'+ev.num+' · ':'')+ev.title:ev.dist+' '+STROKE_NAME[ev.stroke];
+/* ---------- Heats card: every heat and lane in today's meet or practice ---------- */
+function viewHeats(){ const m=M();
+  if(!m||m.canceled||!m.heats||!m.heats.length) return `<div class="card empty"><h3>No heats yet</h3><p>Start a practice set or load a heat sheet and every heat shows up here.</p></div>`;
+  const ck=currentHeat(m); const T0=ck&&m.timers&&m.timers[ck]; const runK=T0&&T0.t0&&!T0.done?ck:null;
+  let nk=null; try{ nk=m.plan?nextPlanHeat(m,runK):null; }catch(e){}
+  if(!nk){ const idx=m.heats.findIndex(h=>h.k===ck); nk=(m.heats.slice(idx+1).find(h=>!(m.timers&&m.timers[h.k]&&m.timers[h.k].done)&&m.entries.some(e=>e.hk===h.k))||{}).k||null; }
+  const hide=!!UI.heatsHideDone;
+  const heats=m.heats.filter(h=>m.entries.some(e=>e.hk===h.k));
+  const doneN=heats.filter(h=>m.timers&&m.timers[h.k]&&m.timers[h.k].done).length;
+  let h=`<div class="hz-top"><span class="small muted"><b>${doneN}</b> of ${heats.length} heats done</span><button class="btn sm" data-act="heats-done" aria-pressed="${hide}">${hide?'Show finished':'Hide finished'}</button></div>`;
+  let lastEv=null, open=false, shown=0;
+  for(const hh of heats){ const T=m.timers&&m.timers[hh.k]; const done=!!(T&&T.done);
+    if(hide&&done&&hh.k!==runK) continue; shown++;
+    if(hh.ev!==lastEv){ if(open) h+='</div></section>'; const ev=m.events[hh.ev]; h+=`<section class="hz-ev"><h3>${esc(evTitle(m,ev))}${hh.round?' · Round '+hh.round:''}</h3><div class="hz-grid">`; open=true; lastEv=hh.ev; }
+    const state=hh.k===runK?'run':done?'done':hh.k===nk?'next':'';
+    const lab={run:'In the water',done:'Done',next:'Up next'}[state]||'';
+    const ents=m.entries.filter(e=>e.hk===hh.k).sort((a,b)=>(a.lane-b.lane)||((a.offset||0)-(b.offset||0)));
+    h+=`<div class="hz ${state}"><button class="hz-h" data-act="timer" data-v="${esc(hh.k)}"><b>Heat ${hh.planHeat||hh.heat}</b>${hh.test?'<span class="chip later">Test</span>':''}${lab?`<span class="hz-s">${lab}</span>`:''}</button>`;
+    h+=ents.map(e=>{ const sw=m.swims&&m.swims[e.id]; const t=entryTime(sw);
+      return `<div class="hz-l tap" data-act="swimmer" data-v="${esc(e.swimmers[0])}"><span class="hz-n">${e.lane}</span><span class="hz-nm">${e.offset?`<span class="go10">+${e.offset}s</span>`:''}${esc(e.relay?'Relay':shortName(e.swimmers[0]))}</span><span class="hz-t">${sw&&sw.dq?'<span class="chip dq">DQ</span>':t!=null?fmt(t):e.seed!=null?`<span class="muted">${fmt(e.seed)}</span>`:''}</span></div>`; }).join('');
+    h+='</div>'; }
+  if(open) h+='</div></section>';
+  if(!shown) h+=`<div class="card empty"><p style="margin:0">Every heat is finished. Tap Show finished to see them.</p></div>`;
+  return h; }
+
+/* ---------- Places card: everyone in each event, fastest first ---------- */
+function viewPlaces(){ const m=M();
+  if(!m||m.canceled||!m.entries||!m.entries.length) return `<div class="card empty"><h3>No races yet</h3><p>Open a meet or practice day and everyone's place shows up here as times come in.</p></div>`;
+  const g=UI.plGrp||'all'; const ro=id=>S.roster.find(s=>s.id===id)||{};
+  const {evs,cell}=boardData(m); const groups=[...new Set(S.roster.map(s=>s.group).filter(Boolean))].sort();
+  let h=groups.length>1?`<div class="rfilter">${[['all','All'],...groups.map(x=>[x,'White '+x])].map(([x,t])=>`<button data-act="pl-grp" data-v="${esc(x)}" aria-pressed="${g===x}">${esc(t)}</button>`).join('')}</div>`:'';
+  let any=false;
+  for(const ev of evs){
+    const ids=[...new Set(m.entries.filter(e=>e.ev===ev.idx&&!e.relay).map(e=>e.swimmers[0]))].filter(id=>g==='all'||ro(id).group===g);
+    const timed=ids.filter(id=>cell[id+'|'+ev.idx]).sort((a,b)=>cell[a+'|'+ev.idx].best-cell[b+'|'+ev.idx].best);
+    const dq=ids.filter(id=>!cell[id+'|'+ev.idx]&&m.entries.some(e=>e.ev===ev.idx&&e.swimmers[0]===id&&m.swims&&m.swims[e.id]&&m.swims[e.id].dq));
+    if(!timed.length&&!dq.length) continue; any=true;
+    const waiting=ids.length-timed.length-dq.length;
+    let place=0, prev=null;
+    h+=`<section class="pl-ev"><div class="pl-h"><h3>${esc(evTitle(m,ev))}</h3><span class="small muted">${timed.length} swimmer${timed.length===1?'':'s'}${waiting?' · '+waiting+' still to swim':''}</span></div><ol class="pl-list">`;
+    timed.forEach((id,i)=>{ const c=cell[id+'|'+ev.idx]; if(prev==null||c.best!==prev) place=i+1; prev=c.best;
+      const pb=priorBest(id,ev,ev.course,null,dayStart(m)-1,!!m.practice); const d=pb?c.best-pb.time:null;
+      h+=`<li class="pl-r tap ${place<=3?'p'+place:''}" data-act="swimmer" data-v="${esc(id)}"><span class="pl-p">${place}</span><span class="pl-nm"><b>${esc(shortName(id))}</b>${ro(id).group&&g==='all'&&groups.length>1?`<small>White ${esc(ro(id).group)}</small>`:''}</span><span class="pl-t">${fmt(c.best)}${c.rec?'<span class="recstar">*</span>':''}${d!=null?`<small class="${dClass(d)}">${fmtDiff(d)}</small>`:''}</span></li>`; });
+    dq.forEach(id=>{ h+=`<li class="pl-r tap" data-act="swimmer" data-v="${esc(id)}"><span class="pl-p">–</span><span class="pl-nm"><b>${esc(shortName(id))}</b></span><span class="pl-t"><span class="chip dq">DQ</span></span></li>`; });
+    h+='</ol></section>'; }
+  if(!any) h+=`<div class="card empty"><p style="margin:0">No times yet${g!=='all'?' for White '+esc(g):''}. Places fill in as each heat finishes.</p></div>`;
+  return h; }
 function viewSwimmers(){
   let h=`<section class="stack"><div class="sec-h"><h2>Swimmers</h2><button class="btn sm" data-act="sheet" data-v="roster">Edit roster</button></div>`;
   if(!S.roster.length) return h+`<div class="card empty"><h3>No roster yet</h3><p>Paste your group's names in Settings.</p></div></section>`;
@@ -3394,6 +3480,8 @@ document.addEventListener('click',async ev=>{
       if(!on&&isWide()) setTimeout(()=>{ const t=document.querySelector(`.tile[data-card="${v}"]`); if(t){ t.classList.add('landed'); setTimeout(()=>t.classList.remove('landed'),700); } },0);
       break; }
     case 'card-up': sendUp(v); render(); break;
+    case 'heats-done': UI.heatsHideDone=!UI.heatsHideDone; render(); break;
+    case 'pl-grp': UI.plGrp=v; render(); break;
     case 'close': UI.armed=null; closeSheet(); break;
     case 'sheet': openSheet({type:v}); break;
     case 'quick': { const lq=UI.lastQuick; let saved=[]; try{ saved=JSON.parse(localStorage.getItem(DK+'.picks')||'[]').filter(id=>swimmer(id)); }catch(e){}
