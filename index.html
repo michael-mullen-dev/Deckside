@@ -940,6 +940,26 @@ body.tablemode .table-empty{flex:1}
 .set-h h1{font-family:var(--display);text-transform:uppercase;font-size:30px;line-height:1}
 .set-h .btn svg{width:18px;height:18px;vertical-align:-4px}
 @media (prefers-reduced-motion:reduce){ .table .tile.landed{animation:none} }
+
+/* slimmer card headers, no repeated titles, themed scrollbars */
+.tile-h{padding:3px 4px 3px 10px;gap:6px}
+.tile-h b{font-size:13px}
+.tile-ic svg{width:15px;height:15px}
+.tile-grip{font-size:14px}
+.tile-up{width:26px;height:26px;border-radius:7px}
+.tile-up svg{width:14px;height:14px}
+body:not(.tablemode) .tile>.tile-h{margin-bottom:10px}
+.sec-h.dup{justify-content:flex-end}.sec-h.dup h2{display:none}
+.table .tbody{padding:10px 12px}
+.table .tbody>.view{gap:12px}
+.table .tbody .rec-hero,.table .tbody .home-hero{padding:12px 14px;border-radius:14px;margin-bottom:8px}
+.table .tbody .pd-title{font-size:24px}
+*{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+*:hover{scrollbar-color:var(--muted) transparent}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
 </style>
 
 </head>
@@ -1226,7 +1246,7 @@ const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 
 function blank(){ return {v:1,records:[],attendance:{},roster:[],standards:[],meets:{},meetOrder:[],active:null,tags:TAGS_DEFAULT.slice(),coreAt:0,deleted:[],demo:false}; }
 let S=null, localOK=true;
-const APP_V='86';   // keep in step with sw.js CACHE
+const APP_V='87';   // keep in step with sw.js CACHE
 const UI={secOpen:{},tab:'meet',sheet:null,hideDone:true,draft:null,armed:null};
 UI.quickStop=true;
 try{ UI.kiosk=localStorage.getItem(LS+'.kiosk')==='1'; }catch(e){}
@@ -1733,6 +1753,7 @@ function render(){ paintSpace();
   const keep={}; main.querySelectorAll('.tbody[data-card]').forEach(t=>{ keep[t.dataset.card]=[t.scrollTop,t.scrollLeft]; });
   main.innerHTML=`<div class="view">${fixBFreeBanner()}${fixB2Banner()}${h}</div>`;
   main.querySelectorAll('.tbody[data-card]').forEach(t=>{ const k=keep[t.dataset.card]; if(k){ t.scrollTop=k[0]; t.scrollLeft=k[1]; } });
+  { const alias={cuts:'qualifying times',records:'records'}; main.querySelectorAll('.tile').forEach(t=>{ const id=t.dataset.card; const h=t.querySelector('.tbody h2'); if(!h||!h.parentElement.classList.contains('sec-h')) return; const tx=h.textContent.trim().toLowerCase(); if(tx===cardName(id).toLowerCase()||tx===alias[id]) h.parentElement.classList.add('dup'); }); }
   { const rb=main.querySelector('.rnav [aria-pressed="true"]'); if(rb){ const nv=rb.parentNode; nv.scrollLeft=Math.max(0,rb.offsetLeft-nv.offsetLeft-(nv.clientWidth-rb.offsetWidth)/2); } }
   if(cardShown('display')){ try{ checkNewRecords(); }catch(e){} startDispTick(); fitDisplay(); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fitDisplay); }
 }
