@@ -749,7 +749,7 @@ details.fold>.fold-b{padding:0 16px 16px}
 .att-track span{display:block;height:100%;background:var(--good);border-radius:99px;transition:width .2s}
 .att-bn{font-variant-numeric:tabular-nums;color:var(--muted)}.att-bn b{color:var(--ink)}
 .att-other{display:flex;flex-direction:column;gap:6px;margin-top:12px}
-.att-days{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;scrollbar-width:thin}
+.att-days{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
 .att-days .att-chip{flex-shrink:0}
 .att-chip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:14px;cursor:pointer}
 .att-chip span{font-size:12px;color:var(--muted)}
@@ -954,12 +954,6 @@ body:not(.tablemode) .tile>.tile-h{margin-bottom:10px}
 .table .tbody>.view{gap:12px}
 .table .tbody .rec-hero,.table .tbody .home-hero{padding:12px 14px;border-radius:14px;margin-bottom:8px}
 .table .tbody .pd-title{font-size:24px}
-*{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
-*:hover{scrollbar-color:var(--muted) transparent}
-::-webkit-scrollbar{width:8px;height:8px}
-::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
-::-webkit-scrollbar-thumb:hover{background:var(--muted)}
 
 .tile-x{display:inline-flex;align-items:center;gap:6px;flex:none;font-size:12px;color:var(--muted)}
 .tile-x .small{font-size:12px}
@@ -1006,6 +1000,35 @@ body:not(.tablemode) .tile>.tile-h{margin-bottom:10px}
 #sheet.docked .sheet-h h3{font-size:13px;letter-spacing:.03em}
 #sheet.docked .x{width:26px;height:26px;border-radius:7px;font-size:16px}
 #sheet.docked .sheet-b{padding:12px 12px 16px}
+
+/* themed scrollbars: a rounded pill in the app's blue, no arrows, clear track */
+::-webkit-scrollbar{width:12px;height:12px;background:transparent}
+::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}
+::-webkit-scrollbar-button{display:none;width:0;height:0}
+::-webkit-scrollbar-thumb{background-color:color-mix(in srgb,var(--accent) 40%,transparent);border:3px solid transparent;background-clip:padding-box;border-radius:99px;min-height:40px}
+::-webkit-scrollbar-thumb:hover{background-color:color-mix(in srgb,var(--accent) 75%,transparent)}
+::-webkit-scrollbar-thumb:active{background-color:var(--accent)}
+@supports not selector(::-webkit-scrollbar){ *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--accent) 45%,transparent) transparent} }
+/* cards you can put away */
+.setup-cards{display:flex;flex-direction:column;gap:10px}
+.sc-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.sc-c{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--accent);background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;text-align:left}
+.sc-c svg{width:20px;height:20px;color:var(--accent)}
+.sc-c span{font-weight:700}
+.sc-c small{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em}
+.sc-c.off{border-color:var(--line);border-style:dashed;opacity:.6}
+.sc-c.off svg,.sc-c.off small{color:var(--muted)}
+/* card bar slides away on computers until the mouse reaches the bottom */
+@media (hover:hover) and (pointer:fine){
+  body.autohide .nav.hand{transform:translateY(calc(100% - 8px));transition:transform .22s ease .35s;border-top-color:transparent;background:transparent}
+  body.autohide .nav.hand::before{content:"";position:absolute;left:50%;top:2px;width:64px;height:4px;margin-left:-32px;border-radius:99px;background:var(--muted);opacity:.55}
+  body.autohide .nav.hand .nav-in{opacity:0;transition:opacity .15s ease .35s}
+  body.autohide .nav.hand:hover,body.autohide.dragging .nav.hand,body.autohide .nav.hand:focus-within{transform:none;transition-delay:0s;background:var(--surface);border-top-color:var(--line)}
+  body.autohide .nav.hand:hover::before,body.autohide.dragging .nav.hand::before,body.autohide .nav.hand:focus-within::before{opacity:0}
+  body.autohide .nav.hand:hover .nav-in,body.autohide.dragging .nav.hand .nav-in,body.autohide .nav.hand:focus-within .nav-in{opacity:1;transition-delay:0s}
+  body.autohide.tablemode main{padding-bottom:16px}
+  body.autohide main{padding-bottom:40px}
+}
 </style>
 
 </head>
@@ -1325,12 +1348,16 @@ const CARDS=[
 const CARD_IDS=CARDS.map(c=>c[0]); const cardName=id=>(CARDS.find(c=>c[0]===id)||[,''])[1];
 try{ const t=JSON.parse(localStorage.getItem(LS+'.table')||'null'); if(Array.isArray(t)) UI.table=[...new Set(t.filter(x=>CARD_IDS.includes(x)))]; }catch(e){}
 if(!UI.table) UI.table=[CARD_IDS.includes(UI.tab)?UI.tab:'meet'];
+try{ UI.hidden=(JSON.parse(localStorage.getItem(LS+'.hiddenCards')||'[]')||[]).filter(x=>CARD_IDS.includes(x)); }catch(e){ UI.hidden=[]; }
+try{ UI.autoHide=localStorage.getItem(LS+'.autoHide')!=='0'; }catch(e){ UI.autoHide=true; }
+UI.table=UI.table.filter(x=>!UI.hidden.includes(x));
+function saveHidden(){ try{ localStorage.setItem(LS+'.hiddenCards',JSON.stringify(UI.hidden)); }catch(e){} }
 function saveTable(){ try{ localStorage.setItem(LS+'.table',JSON.stringify(UI.table)); if(UI.tab) localStorage.setItem(LS+'.tab',UI.tab); }catch(e){} }
 const isWide=()=>window.innerWidth>=900;
 const tableMode=()=>isWide()&&!UI.kiosk&&UI.tab!=='setup';
 /* is this card on screen right now? (big screens show every card on the table, phones show one) */
 function cardShown(id){ if(UI.kiosk) return id==='display'; if(UI.tab==='setup'||!UI.table.includes(id)) return false; return isWide()||UI.tab===id; }
-function putDown(id,at){ if(!CARD_IDS.includes(id)) return; const i=UI.table.indexOf(id); if(i<0){ if(at!=null&&at>=0) UI.table.splice(at,0,id); else UI.table.push(id); } UI.tab=id; saveTable(); }
+function putDown(id,at){ if(!CARD_IDS.includes(id)) return; if(UI.hidden.includes(id)){ UI.hidden=UI.hidden.filter(x=>x!==id); saveHidden(); } const i=UI.table.indexOf(id); if(i<0){ if(at!=null&&at>=0) UI.table.splice(at,0,id); else UI.table.push(id); } UI.tab=id; saveTable(); }
 function sendUp(id){ const i=UI.table.indexOf(id); if(i<0) return; UI.table.splice(i,1); if(UI.tab===id) UI.tab=UI.table[Math.min(i,UI.table.length-1)]||''; saveTable(); }
 function cardBody(id,m){
   switch(id){
@@ -1351,7 +1378,7 @@ function tileHTML(id,m,wide){
   let body=''; try{ body=cardBody(id,m); }catch(e){ console.error(e); body=`<div class="card empty"><p>This card hit a problem: ${esc(e.message||e)}</p></div>`; }
   return `<section class="tile ${UI.tab===id?'focus':''}" data-card="${id}"><header class="tile-h" data-card="${id}" ${wide?'draggable="true"':''}><span class="tile-ic">${(CARDS.find(c=>c[0]===id)||[])[2]||''}</span><b>${esc(cardName(id))}</b>${wide?'<span class="tile-grip" aria-hidden="true">⠿</span>':''}<button class="tile-up" data-act="card-up" data-v="${id}" title="Send back up to your hand" aria-label="Send ${esc(cardName(id))} back up">${IC('<path d="M12 19V5M5 12l7-7 7 7"/>')}</button></header><div class="tbody" data-card="${id}"><div class="view">${body}</div></div></section>`; }
 function paintHand(){ const nv=$('#hand'); if(!nv) return;
-  nv.innerHTML=CARDS.map(([id,nm,ic])=>{ const on=UI.table.includes(id); return `<button data-act="card" data-v="${id}" data-card="${id}" draggable="true" aria-pressed="${on}" aria-current="${UI.tab===id}" title="${on?'On the table':'Put on the table'}">${ic}<span>${esc(nm)}</span></button>`; }).join(''); 
+  nv.innerHTML=CARDS.filter(([id])=>!UI.hidden.includes(id)).map(([id,nm,ic])=>{ const on=UI.table.includes(id); return `<button data-act="card" data-v="${id}" data-card="${id}" draggable="true" aria-pressed="${on}" aria-current="${UI.tab===id}" title="${on?'On the table':'Put on the table'}">${ic}<span>${esc(nm)}</span></button>`; }).join(''); 
   const cur=nv.querySelector('[aria-current="true"]'); if(cur&&nv.scrollWidth>nv.clientWidth) nv.scrollLeft=Math.max(0,cur.offsetLeft-(nv.clientWidth-cur.offsetWidth)/2); }
 
 function loadLocal(){
@@ -1776,7 +1803,7 @@ function render(){ paintSpace();
   const wel=needsWelcome(); document.body.classList.toggle('welcoming',wel);
   if(wel){ $('#main').innerHTML=`<div class="view">${viewWelcome()}</div>`; return; }
   if(UI.kiosk) UI.tab='display';
-  else if(UI.tab!=='setup'){ if(CARD_IDS.includes(UI.tab)&&!UI.table.includes(UI.tab)){ UI.table.push(UI.tab); saveTable(); } if(!UI.table.includes(UI.tab)) UI.tab=UI.table[UI.table.length-1]||''; }
+  else if(UI.tab!=='setup'){ if(CARD_IDS.includes(UI.tab)&&!UI.table.includes(UI.tab)){ UI.table.push(UI.tab); saveTable(); if(UI.hidden.includes(UI.tab)){ UI.hidden=UI.hidden.filter(x=>x!==UI.tab); saveHidden(); } } if(!UI.table.includes(UI.tab)) UI.tab=UI.table[UI.table.length-1]||''; }
   if(UI.tab&&UI.tab!=='setup') UI.lastCard=UI.tab;
   paintHand();
   const m=M(); $('#meetname').textContent=m?(m.name||'Untitled meet'):'';
@@ -1796,7 +1823,7 @@ function render(){ paintSpace();
     h+=`<div class="pdots">${UI.table.length>1?UI.table.map(x=>`<button data-act="tab" data-v="${x}" aria-current="${x===id}">${esc(cardName(x))}</button>`).join(''):''}</div>`;
     h+=tileHTML(id,m,false); }
   document.body.classList.toggle('kiosk',!!UI.kiosk); document.body.classList.toggle('nosetup',!!UI.hideSetup);
-  document.body.classList.toggle('tablemode',tmode&&UI.table.length>0); document.body.classList.toggle('settingsmode',UI.tab==='setup'); document.body.classList.toggle('dispmode',!!UI.kiosk);
+  document.body.classList.toggle('tablemode',tmode&&UI.table.length>0); document.body.classList.toggle('settingsmode',UI.tab==='setup'); document.body.classList.toggle('dispmode',!!UI.kiosk); document.body.classList.toggle('autohide',!!UI.autoHide);
   main.classList.toggle('wide',!!UI.kiosk);
   { const tp=document.querySelector('header.top'); if(tp) document.documentElement.style.setProperty('--hdr',tp.offsetHeight+'px'); }
   const fb=$('#fsbtn'); if(fb) fb.hidden=!document.fullscreenEnabled;
@@ -2933,6 +2960,8 @@ function viewSetup(m){
   } else if(!UI.qsHidden) h+=`<div class="setup-line"><span><b>Quick setup</b> <span class="small muted">${S.roster.length} swimmers · ${nTimes} times · ${(S.records||[]).length} records</span></span><span class="row"><button class="btn sm" data-act="qs-fold" data-v="1">Open</button><button class="btn sm ghost" data-act="qs-hide" aria-label="Hide quick setup">Hide</button></span></div>`;
   // the few things used day to day
   h+=recConfirmHTML(pendingRecords());
+  h+=`<div class="card setup-cards"><div class="sec-h"><h2>Your cards</h2><span class="small muted">Just this device</span></div><p class="hint" style="margin:0">Put away cards you don't use. They leave the bar at the bottom until you bring them back here.</p><div class="sc-list">${CARDS.map(([id,nm,ic])=>{ const off=UI.hidden.includes(id); return `<button class="sc-c ${off?'off':''}" data-act="card-hide" data-v="${id}" aria-pressed="${!off}">${ic}<span>${esc(nm)}</span><small>${off?'Put away':'In your hand'}</small></button>`; }).join('')}</div>
+    <div class="setup-line" style="padding:10px 0 0;border:0;box-shadow:none;background:none"><span><b>Hide the card bar</b> <span class="small muted">On a computer it slides away and comes back when you move the mouse to the bottom of the screen</span></span><span class="segs" role="group" aria-label="Hide the card bar"><button data-act="autohide" data-v="1" aria-pressed="${UI.autoHide}">On</button><button data-act="autohide" data-v="0" aria-pressed="${!UI.autoHide}">Off</button></span></div></div>`;
   h+=`<div class="setup-line"><span><b>Appearance</b> <span class="small muted">Just this device</span></span><span class="segs" role="group" aria-label="Appearance">${[['auto','Auto'],['light','Light'],['dark','Dark']].map(([x,t])=>`<button data-act="theme-set" data-v="${x}" aria-pressed="${themePref()===x}">${t}</button>`).join('')}</span></div>`;
   h+=`<section class="card stack" style="gap:10px"><div class="row" style="justify-content:space-between"><span class="eyebrow">This practice</span>${practiceGrpSegs()}</div>
     <div class="row" style="justify-content:space-between"><span class="small">${sync.db?`<b style="color:var(--good)">Sync is on</b> <span class="muted">${esc(sync.email||'')}</span>`:'<b style="color:var(--bad)">Sync is off</b> <span class="muted">· open Saving &amp; sync below</span>'}</span><button class="btn sm" data-act="kiosk-on">Make this the display board</button></div></section>`;
@@ -3494,6 +3523,8 @@ document.addEventListener('click',async ev=>{
       render(); if(!isWide()) window.scrollTo(0,0);
       if(!on&&isWide()) setTimeout(()=>{ const t=document.querySelector(`.tile[data-card="${v}"]`); if(t){ t.classList.add('landed'); setTimeout(()=>t.classList.remove('landed'),700); } },0);
       break; }
+    case 'card-hide': { if(UI.hidden.includes(v)) UI.hidden=UI.hidden.filter(x=>x!==v); else { if(UI.hidden.length>=CARD_IDS.length-1){ toast('Keep at least one card'); break; } UI.hidden.push(v); if(UI.table.includes(v)) sendUp(v); } saveHidden(); render(); break; }
+    case 'autohide': UI.autoHide=v==='1'; try{ localStorage.setItem(LS+'.autoHide',UI.autoHide?'1':'0'); }catch(e){} render(); break;
     case 'card-up': sendUp(v); if(UI.sheet&&!sheetDocked()&&v==='meet'){ UI.sheet=null; $('#sheet').hidden=true; } render(); break;
     case 'heats-done': UI.heatsHideDone=!UI.heatsHideDone; render(); break;
     case 'pl-grp': UI.plGrp=v; render(); break;
