@@ -1053,6 +1053,9 @@ body:not(.tablemode) .tile>.tile-h{margin-bottom:10px}
 .slog-x{flex:none;min-width:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font:inherit;font-weight:700;font-size:13px;padding:0 8px}
 .slog-x:hover{color:var(--bad);border-color:currentColor}
 .slog-x.armed{background:var(--bad);color:#fff;border-color:transparent}
+
+.clk-close{display:flex;justify-content:flex-end}
+.clk-close .btn svg{width:16px;height:16px;vertical-align:-3px;margin-right:2px}
 </style>
 
 </head>
@@ -1339,7 +1342,7 @@ const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 
 function blank(){ return {v:1,records:[],attendance:{},roster:[],standards:[],meets:{},meetOrder:[],active:null,tags:TAGS_DEFAULT.slice(),coreAt:0,deleted:[],demo:false}; }
 let S=null, localOK=true;
-const APP_V='90';   // keep in step with sw.js CACHE
+const APP_V='91';   // keep in step with sw.js CACHE
 const UI={secOpen:{},tab:'meet',sheet:null,hideDone:true,draft:null,armed:null};
 UI.quickStop=true;
 try{ UI.kiosk=localStorage.getItem(LS+'.kiosk')==='1'; }catch(e){}
@@ -1385,7 +1388,7 @@ function putDown(id,at){ if(!CARD_IDS.includes(id)) return; if(UI.hidden.include
 function sendUp(id){ const i=UI.table.indexOf(id); if(i<0) return; UI.table.splice(i,1); if(UI.tab===id) UI.tab=UI.table[Math.min(i,UI.table.length-1)]||''; saveTable(); }
 function cardBody(id,m){
   switch(id){
-    case 'meet': return m&&!m.canceled&&!m.finished?viewClock(m):viewMeet(m);
+    case 'meet': return m&&!m.canceled&&!m.finished&&UI.clockOff!==m.id?viewClock(m):viewMeet(m);
     case 'display': return viewDisplay(m);
     case 'records': return viewRecBoard();
     case 'top': return viewTop5();
@@ -3088,10 +3091,13 @@ function dockSheet(){ const el=$('#sheet'); if(!el) return; const on=sheetDocked
   if(on){ const r=document.querySelector('.tile[data-card="meet"]').getBoundingClientRect(); el.style.setProperty('--dt',r.top+'px'); el.style.setProperty('--dl',r.left+'px'); el.style.setProperty('--dw',r.width+'px'); el.style.setProperty('--dh',r.height+'px'); } }
 window.addEventListener('resize',()=>{ if(UI.sheet) dockSheet(); });
 function openSheet(s){
+  if(s&&s.type==='timer'){ const m0=M(); if(m0&&UI.clockOff===m0.id&&cardShown('meet')) setClockOff(null); }
   if(s&&s.type==='timer'&&clockInCard()){ const m=M(); UI.clock={v:s.v,meet:m&&m.id}; if(UI.sheet){ UI.sheet=null; $('#sheet').hidden=true; $('#sheet').innerHTML=''; } rememberSheet(); render(); return; }
   UI.sheet=s; renderSheet(); rememberSheet(); }
 /* ---------- the Meet card is just the clock now: results live on the Heats, Places and Display cards ---------- */
-function clockInCard(){ const m=M(); return !!(m&&!m.canceled&&!m.finished&&!UI.kiosk&&cardShown('meet')); }
+try{ UI.clockOff=localStorage.getItem(DK+'.clockOff')||null; }catch(e){}
+function setClockOff(id){ UI.clockOff=id||null; try{ if(id) localStorage.setItem(DK+'.clockOff',id); else localStorage.removeItem(DK+'.clockOff'); }catch(e){} }
+function clockInCard(){ const m=M(); return !!(m&&!m.canceled&&!m.finished&&!UI.kiosk&&cardShown('meet')&&UI.clockOff!==m.id); }
 function clockKey(m){ if(!m||!m.heats||!m.heats.length) return null; const has=k=>m.heats.some(h=>h.k===k)&&m.entries.some(e=>e.hk===k);
   const run=Object.keys(m.timers||{}).filter(k=>{ const T=m.timers[k]; return T&&T.t0&&!T.done&&has(k); }).sort((a,b)=>m.timers[b].t0-m.timers[a].t0)[0];
   const pick=UI.clock&&UI.clock.meet===m.id&&has(UI.clock.v)?UI.clock.v:null;
@@ -3108,7 +3114,7 @@ function viewClock(m){
   if(!k){ return h+`<div class="card empty"><h3>${m.practice?'Ready when you are':'Nothing to time'}</h3><p>${m.practice?'Start a set and the clock shows up here.':'None of your swimmers are left to time in this meet.'}</p>${m.practice?'<button class="btn primary" data-act="quick">Time a new set</button>':''}</div>`; }
   let body=''; try{ body=sheetTimer(m,k)[1]; }catch(e){ body=`<p>${esc(e.message)}</p>`; }
   const tlist=m.heats.filter(x=>m.entries.some(e=>e.hk===x.k)); const i=tlist.findIndex(x=>x.k===k);
-  const nav=`<div class="clk-nav"><button class="btn sm" data-act="timer" data-v="${esc((tlist[i-1]||{}).k||'')}" ${i>0?'':'disabled'} aria-label="Previous heat">‹</button><span class="small muted">${esc(m.practice&&!m.plan?'Set '+(i+1)+' of '+tlist.length:heatLabel(m,k))}</span><button class="btn sm" data-act="timer" data-v="${esc((tlist[i+1]||{}).k||'')}" ${i<tlist.length-1?'':'disabled'} aria-label="Next heat">›</button></div>`;
+  const nav=`<div class="clk-close"><button class="btn" data-act="clock-off">${IC('<path d="M18 6L6 18M6 6l12 12"/>')} Close timer</button></div><div class="clk-nav"><button class="btn sm" data-act="timer" data-v="${esc((tlist[i-1]||{}).k||'')}" ${i>0?'':'disabled'} aria-label="Previous heat">‹</button><span class="small muted">${esc(m.practice&&!m.plan?'Set '+(i+1)+' of '+tlist.length:heatLabel(m,k))}</span><button class="btn sm" data-act="timer" data-v="${esc((tlist[i+1]||{}).k||'')}" ${i<tlist.length-1?'':'disabled'} aria-label="Next heat">›</button></div>`;
   return h+nav+`<div class="clk">${body}</div>`+(m.practice&&!m.plan?'<div class="row" style="justify-content:center"><button class="btn ghost" data-act="quick">Time a new set</button></div>':'');
 }
 function paintClock(){ const tb=document.querySelector('.tbody[data-card="meet"]'); const m=M(); if(!tb||!clockInCard()) return; const v=tb.querySelector(':scope>.view'); if(v) v.innerHTML=viewClock(m); startTick(); }
@@ -3596,7 +3602,8 @@ document.addEventListener('click',async ev=>{
     case 'card-up': sendUp(v); if(UI.sheet&&!sheetDocked()&&v==='meet'){ UI.sheet=null; $('#sheet').hidden=true; } render(); break;
     case 'heats-done': UI.heatsHideDone=!UI.heatsHideDone; render(); break;
     case 'pl-grp': UI.plGrp=v; render(); break;
-    case 'close': UI.armed=null; if(!UI.sheet&&UI.clock){ UI.clock=null; render(); break; } closeSheet(); break;
+    case 'close': UI.armed=null; if(!UI.sheet&&clockInCard()){ UI.clock=null; setClockOff(M().id); render(); break; } closeSheet(); break;
+    case 'clock-off': UI.armed=null; UI.clock=null; if(m) setClockOff(m.id); if(UI.sheet&&UI.sheet.type==='timer') closeSheet(); else render(); break;
     case 'sheet': openSheet({type:v}); break;
     case 'quick': { const lq=UI.lastQuick; let saved=[]; try{ saved=JSON.parse(localStorage.getItem(DK+'.picks')||'[]').filter(id=>swimmer(id)); }catch(e){}
       UI.quick=UI.quick||(lq?clone(lq):{dist:50,stroke:'FL',course:(M()&&!M().practice&&M().course)||'SCY',ids:[]}); void saved; ensureQuick(); openSheet({type:'quick'}); break; }
