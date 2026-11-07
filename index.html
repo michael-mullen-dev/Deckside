@@ -1046,6 +1046,13 @@ body:not(.tablemode) .tile>.tile-h{margin-bottom:10px}
 .clk-nav .btn{min-width:44px;font-size:20px;line-height:1}
 .clk{display:flex;flex-direction:column;gap:14px}
 @container tile (min-width:640px){ .clk .tm-clock{font-size:128px} }
+
+.slog-m{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 4px 4px}
+.slog-r{display:flex;align-items:stretch;gap:6px}
+.slog-r .srow{flex:1;min-width:0}
+.slog-x{flex:none;min-width:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font:inherit;font-weight:700;font-size:13px;padding:0 8px}
+.slog-x:hover{color:var(--bad);border-color:currentColor}
+.slog-x.armed{background:var(--bad);color:#fff;border-color:transparent}
 </style>
 
 </head>
@@ -3393,8 +3400,11 @@ function sheetSwimmer(id){
   h+='</section>';
   // history
   h+=`<section class="stack"><div class="sec-h"><h2>Swim log</h2></div>`;
-  if(hist.length){ h+='<div class="list">'; for(const x of [...hist].reverse()){ const pr=isPR(x.m,x.e,x.sw);
-    h+=`<button class="srow" data-act="entry-in" data-meet="${esc(x.m.id)}" data-v="${esc(x.e.id)}"><span class="clock" style="font-size:14px">${esc((x.m.date||'').slice(5).replace('-','/'))}<small>${esc((x.m.name||'').slice(0,14))}</small></span><span class="who"><b>${x.ev.dist} ${STROKE_NAME[x.ev.stroke]} ${x.course}</b><span>${esc((x.sw.tags||[]).join(', ')||x.sw.note||'')}</span></span><span class="res"><span class="t">${x.sw.dq?'DQ':fmt(x.time)}</span>${(pb=>pb&&x.time!=null?`<span class="small ${dClass(x.time-pb.time)}">${fmtDiff(x.time-pb.time)}</span>`:'')(priorBest(id,x.ev,x.course,x.e.id,x.at,x.practice))}${x.sw.dq?'<span class="chip dq">DQ</span>':x.practice?'<span class="chip later">Practice</span>':pr?'<span class="chip pr">PR</span>':''}</span></button>`; }
+  if(hist.length){ h+='<div class="list">'; let lastM=null; for(const x of [...hist].reverse()){ const pr=isPR(x.m,x.e,x.sw);
+    if(x.m.id!==lastM){ lastM=x.m.id; const ak='mdel-'+x.m.id; const n=Object.values(x.m.swims||{}).filter(w=>w&&(w.time!=null||w.official!=null)).length;
+      h+=`<div class="slog-m"><span><b>${esc(x.m.name||(x.m.practice?'Practice':'Meet'))}</b> <span class="small muted">${esc(x.m.date||'')}</span></span><button class="btn sm danger ${UI.armed===ak?'armed':''}" data-act="meet-del" data-v="${esc(x.m.id)}">${UI.armed===ak?'Tap again: delete the whole meet ('+n+' swims, every swimmer)':'Delete meet'}</button></div>`; }
+    const dk='sdel-'+x.m.id+'|'+x.e.id;
+    h+=`<div class="slog-r"><button class="srow" data-act="entry-in" data-meet="${esc(x.m.id)}" data-v="${esc(x.e.id)}"><span class="clock" style="font-size:14px">${esc((x.m.date||'').slice(5).replace('-','/'))}<small>${esc((x.m.name||'').slice(0,14))}</small></span><span class="who"><b>${x.ev.dist} ${STROKE_NAME[x.ev.stroke]} ${x.course}</b><span>${esc((x.sw.tags||[]).join(', ')||x.sw.note||'')}</span></span><span class="res"><span class="t">${x.sw.dq?'DQ':fmt(x.time)}</span>${(pb=>pb&&x.time!=null?`<span class="small ${dClass(x.time-pb.time)}">${fmtDiff(x.time-pb.time)}</span>`:'')(priorBest(id,x.ev,x.course,x.e.id,x.at,x.practice))}${x.sw.dq?'<span class="chip dq">DQ</span>':x.practice?'<span class="chip later">Practice</span>':pr?'<span class="chip pr">PR</span>':''}</span></button><button class="slog-x ${UI.armed===dk?'armed':''}" data-act="swim-del" data-meet="${esc(x.m.id)}" data-v="${esc(x.e.id)}" aria-label="Delete this time">${UI.armed===dk?'Delete?':'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>'}</button></div>`; }
     h+='</div>'; }
   else h+=`<p class="hint">No swims logged yet.</p>`;
   h+=`<p class="hint">Best times and cuts count meet swims only. Practice swims are compared with earlier practice swims: <span class="drop">green −</span> means they dropped time, <span class="gain">red +</span> means they added.</p></section><div class="row"><button class="btn danger ${UI.armed==='rm-sw'?'armed':''}" data-act="rm-swimmer" data-v="${esc(id)}">${UI.armed==='rm-sw'?'Tap again to remove':'Remove from roster'}</button></div>`;
@@ -3537,6 +3547,11 @@ function finalize(m,T,eid){
 /* ---------- actions ---------- */
 let toastT=null;
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true,2200); }
+function delSwim(mm,v){ const sw=mm&&mm.swims&&mm.swims[v]; if(!sw) return false;
+  delete sw.time; delete sw.splits; delete sw.rec; delete sw.official; delete sw.dq; mm.gone=mm.gone||{}; mm.gone['s:'+v]=Date.now();
+  const e=mm.entries.find(x=>x.id===v); const T=e&&mm.timers&&mm.timers[e.hk]; if(T){ if(T.laps) delete T.laps[v]; if(T.fin) delete T.fin[v]; }
+  save(mm.id); return true; }
+function deleteMeet(id){ if(!S.meets[id]) return; delete S.meets[id]; S.meetOrder=S.meetOrder.filter(x=>x!==id); S.deleted=[...(S.deleted||[]),id]; sync.dirty.add('del_'+id); if(sync.db) ref('raw_'+id).delete().catch(()=>{}); if(S.active===id) S.active=S.meetOrder[0]||null; try{localStorage.removeItem(DK+'.raw.'+id);}catch(e){} save('core'); }
 function arm(key){ if(UI.armed===key){ UI.armed=null; return true; } UI.armed=key; setTimeout(()=>{ if(UI.armed===key){ UI.armed=null; UI.sheet?renderSheet():render(); } },3500); return false; }
 function rer(){ UI.sheet?renderSheet():render(); }
 
@@ -3641,10 +3656,9 @@ document.addEventListener('click',async ev=>{
     case 'q-next': { const lq=clone(UI.lastQuick||UI.quick); const i=IM_ORDER.indexOf(lq.stroke); if(i>=0) lq.stroke=IM_ORDER[(i+1)%4]; UI.quick=lq; openSheet({type:'quick'}); break; }
     case 'timer': openSheet({type:'timer',v}); break;
     case 'entry': openSheet({type:'entry',v}); break;
-    case 'sw-del': { if(!arm('sw-del')){ renderSheet(); break; } const sw=m&&m.swims&&m.swims[v]; if(!sw) break;
-      delete sw.time; delete sw.splits; delete sw.rec; delete sw.official; delete sw.dq; m.gone=m.gone||{}; m.gone['s:'+v]=Date.now();
-      const e=m.entries.find(x=>x.id===v); const T=e&&m.timers&&m.timers[e.hk]; if(T){ if(T.laps) delete T.laps[v]; if(T.fin) delete T.fin[v]; }
-      save(m.id); closeSheet(); toast('Time deleted'); break; }
+    case 'sw-del': { if(!arm('sw-del')){ renderSheet(); break; } if(delSwim(m,v)){ closeSheet(); toast('Time deleted'); } break; }
+    case 'swim-del': { const mm=S.meets[b.dataset.meet]; if(!arm('sdel-'+b.dataset.meet+'|'+v)){ renderSheet(); break; } if(delSwim(mm,v)){ toast('Time deleted'); render(); renderSheet(); } break; }
+    case 'meet-del': { if(!arm('mdel-'+v)){ renderSheet(); break; } const nm=(S.meets[v]&&S.meets[v].name)||'Meet'; deleteMeet(v); toast(nm+' deleted'); render(); renderSheet(); break; }
     case 'entry-in': if(b.dataset.meet!==S.active){ S.active=b.dataset.meet; save('core'); } openSheet({type:'entry',v}); break;
     case 'sw-chart': { UI.chartEv=UI.chartEv||{}; UI.chartEv[v]=b.dataset.k; renderSheet(); break; }
     case 'prog-copy': { const txt=progressText(v); try{ await navigator.clipboard.writeText(txt); toast('Copied. Paste it into your message.'); }catch(e){ openSheet({type:'text',v:txt,title:'Progress for parent'}); } break; }
@@ -3682,7 +3696,7 @@ document.addEventListener('click',async ev=>{
     case 'att-grp': UI.attGrp=v; render(); break;
     case 'att-edit': UI.attEdit=!UI.attEdit; UI.armed=null; render(); break;
     case 'pick-meet': S.active=v; save('core'); UI.tab='meet'; render(); break;
-    case 'del-meet': { if(!arm('del-meet')){ render(); break; } const id=S.active; delete S.meets[id]; S.meetOrder=S.meetOrder.filter(x=>x!==id); S.deleted=[...(S.deleted||[]),id]; sync.dirty.add('del_'+id); if(sync.db) ref('raw_'+id).delete().catch(()=>{}); S.active=S.meetOrder[0]||null; try{localStorage.removeItem(DK+'.raw.'+id);}catch(e){} save('core'); render(); toast('Meet deleted'); break; }
+    case 'del-meet': { if(!arm('del-meet')){ render(); break; } deleteMeet(S.active); render(); toast('Meet deleted'); break; }
     case 'save-roster': saveRoster(); break;
     case 'sb-in': sbAuth('in'); break;
     case 'sb-up': sbAuth('up'); break;
