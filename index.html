@@ -3251,7 +3251,8 @@ function sheetEntry(m,eid){
   let h=`<div><div class="eyebrow">E${esc(ev.num)} · H${hh?hh.heat:'?'} · ${e.lane!=null?'Lane '+e.lane:'Lane ?'}</div><h2 class="up-name" style="font-size:30px">${esc(nm)}</h2><div class="muted">${esc(ev.title)}${e.relay&&e.swimmers.length?' · '+e.swimmers.map(swName).map(esc).join(', '):''}</div></div>`;
   if(sw.time!=null||sw.official!=null||sw.dq){
     h+=`<div class="card stack"><div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="eyebrow">${sw.dq?'Disqualified':sw.official!=null?'Official time':'Hand time'}</div><div class="bigtime t">${sw.dq?'DQ':fmt(t)}</div>${sw.official!=null&&sw.time!=null?`<div class="small muted">Hand ${fmt(sw.time)}</div>`:''}</div>
-      <div class="row">${!sw.dq&&!e.relay&&isPR(m,e,sw)?'<span class="chip pr">PR</span>':''}</div></div>`;
+      <div class="row">${!sw.dq&&!e.relay&&isPR(m,e,sw)?'<span class="chip pr">PR</span>':''}</div></div>
+      <div class="row" style="justify-content:flex-end"><button class="btn sm danger ${UI.armed==='sw-del'?'armed':''}" data-act="sw-del" data-v="${esc(e.id)}">${UI.armed==='sw-del'?'Tap again to delete this time':'Delete this time'}</button></div>`;
     if(!sw.dq&&m.practice){
       const pb=priorBest(e.swimmers[0],ev,course,e.id,sw.at,true), mb=priorBest(e.swimmers[0],ev,course,e.id,null,false);
       h+=`<div class="cmp"><div><div class="eyebrow">Previous practice best</div><div class="v t">${pb?fmt(pb.time):'—'}</div><div class="small ${pb&&t!=null?dClass(t-pb.time):''}">${pb&&t!=null?fmtDiff(t-pb.time):'First practice swim of this'}</div></div>
@@ -3640,6 +3641,10 @@ document.addEventListener('click',async ev=>{
     case 'q-next': { const lq=clone(UI.lastQuick||UI.quick); const i=IM_ORDER.indexOf(lq.stroke); if(i>=0) lq.stroke=IM_ORDER[(i+1)%4]; UI.quick=lq; openSheet({type:'quick'}); break; }
     case 'timer': openSheet({type:'timer',v}); break;
     case 'entry': openSheet({type:'entry',v}); break;
+    case 'sw-del': { if(!arm('sw-del')){ renderSheet(); break; } const sw=m&&m.swims&&m.swims[v]; if(!sw) break;
+      delete sw.time; delete sw.splits; delete sw.rec; delete sw.official; delete sw.dq; m.gone=m.gone||{}; m.gone['s:'+v]=Date.now();
+      const e=m.entries.find(x=>x.id===v); const T=e&&m.timers&&m.timers[e.hk]; if(T){ if(T.laps) delete T.laps[v]; if(T.fin) delete T.fin[v]; }
+      save(m.id); closeSheet(); toast('Time deleted'); break; }
     case 'entry-in': if(b.dataset.meet!==S.active){ S.active=b.dataset.meet; save('core'); } openSheet({type:'entry',v}); break;
     case 'sw-chart': { UI.chartEv=UI.chartEv||{}; UI.chartEv[v]=b.dataset.k; renderSheet(); break; }
     case 'prog-copy': { const txt=progressText(v); try{ await navigator.clipboard.writeText(txt); toast('Copied. Paste it into your message.'); }catch(e){ openSheet({type:'text',v:txt,title:'Progress for parent'}); } break; }
