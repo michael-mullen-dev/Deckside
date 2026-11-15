@@ -2566,7 +2566,8 @@ function practiceEvent(m,dist,stroke,course){
 /* Test mode is only for the head coach's own account. Stored as fingerprints (SHA-256), not the addresses themselves. */
 const OWNER_H=['2730f95240dca2be77dbb7d624b05f4412a2d48807d29976f58b9267fcb7cbe9','b602b8236e692d4fb35d4c50298af7b71013b0d482d2d5e086e750e4fdb811ac'];
 async function checkOwner(){ sync.owner=false; try{ const e=(sync.email||'').trim().toLowerCase(); if(!e||!crypto.subtle) return; const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(e)); const hx=[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join(''); sync.owner=OWNER_H.includes(hx); }catch(e){ sync.owner=false; } if(!sync.owner) S.testMode=false; }
-const canTest=()=>!!sync.owner;
+/* test mode is for the head coach: your own account (not an invited coach), or the owner emails */
+const canTest=()=>!!sync.owner||!!(sync.db&&!sync.team);
 /* starting a set or race day while Test mode is on: make the coach confirm, loudly */
 function testGuard(fn){ if(S.testMode&&!canTest()) S.testMode=false; if(!S.testMode){ fn(); return; } UI.pendingStart=fn; let d=document.getElementById('testguard'); if(!d){ d=document.createElement('div'); d.id='testguard'; document.body.appendChild(d); }
   d.innerHTML=`<div class="tg-card" role="alertdialog" aria-labelledby="tg-h"><div class="tg-h" id="tg-h">ARE YOU SURE YOU WANT TO START A TEST DAY?</div><p class="tg-p">Test mode is ON. Times from a test won't count toward best times, drops, Top 5, records or the monthly goal.</p>
