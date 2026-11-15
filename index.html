@@ -1067,6 +1067,19 @@ body:not(.tablemode) .tile>.tile-h{margin-bottom:10px}
 .lane.other{opacity:.6}
 .dqbtn{min-height:36px;min-width:56px;border-radius:9px;border:1.5px solid var(--bad);background:transparent;color:var(--bad);font:inherit;font-weight:800;cursor:pointer}
 .dqbtn.on{background:var(--bad);color:#fff}
+
+/* Heats card uses the Display's heats board look */
+.hcard-heats{font-size:12px;display:flex;flex-direction:column;gap:18px}
+.hcard-heats .dheats-top .disp-title{font-size:1.9em}
+.hcard-heats .dheats{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+.hcard-heats .dh-h{border:0;background:none;color:inherit;font:inherit;font-family:var(--display);font-weight:700;text-transform:uppercase;font-size:1.9em;line-height:1.05;padding:0;cursor:pointer;width:100%;text-align:left}
+.hcard-heats .dl-a,.hcard-heats .dl-b{border:0;background:none;color:inherit;font:inherit;padding:0;cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:.4em;width:100%}
+.hcard-heats .dl-a{font-weight:700;font-size:1.3em}
+.hcard-heats .dl-b{font-weight:600;font-size:1.2em}
+.hcard-heats .dl-a>span:first-child,.hcard-heats .dl-b>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:.3em}
+.dl-t{font-variant-numeric:tabular-nums;font-weight:800;font-size:.9em;color:var(--ink);flex:none}
+.dl-t.dq{color:var(--bad)}
+@container tile (min-width:700px){ .hcard-heats{font-size:14px} }
 </style>
 
 </head>
@@ -2875,7 +2888,7 @@ function viewRecBoard(){ const top='';
   return h+'</section>';
 }
 const evTitle=(m,ev)=>!m.practice&&ev.title?(ev.num?'#'+ev.num+' · ':'')+ev.title:ev.dist+' '+STROKE_NAME[ev.stroke];
-/* ---------- Heats card: every heat and lane in today's meet or practice ---------- */
+/* ---------- Heats card: same look as the Display's heats board, plus each lane's time ---------- */
 function viewHeats(){ const m=M();
   if(!m||m.canceled||!m.heats||!m.heats.length) return `<div class="card empty"><h3>No heats yet</h3><p>Start a practice set or load a heat sheet and every heat shows up here.</p></div>`;
   const ck=currentHeat(m); const T0=ck&&m.timers&&m.timers[ck]; const runK=T0&&T0.t0&&!T0.done?ck:null;
@@ -2884,19 +2897,27 @@ function viewHeats(){ const m=M();
   const hide=!!UI.heatsHideDone;
   const heats=m.heats.filter(h=>m.entries.some(e=>e.hk===h.k));
   const doneN=heats.filter(h=>m.timers&&m.timers[h.k]&&m.timers[h.k].done).length;
-  let h=`<div class="hz-top"><span class="small muted"><b>${doneN}</b> of ${heats.length} heats done</span><button class="btn sm" data-act="heats-done" aria-pressed="${hide}">${hide?'Show finished':'Hide finished'}</button></div>`;
-  let lastEv=null, open=false, shown=0;
-  for(const hh of heats){ const T=m.timers&&m.timers[hh.k]; const done=!!(T&&T.done);
-    if(hide&&done&&hh.k!==runK) continue; shown++;
-    if(hh.ev!==lastEv){ if(open) h+='</div></section>'; const ev=m.events[hh.ev]; h+=`<section class="hz-ev"><h3>${esc(evTitle(m,ev))}${hh.round?' · Round '+hh.round:''}</h3><div class="hz-grid">`; open=true; lastEv=hh.ev; }
-    const state=hh.k===runK?'run':done?'done':hh.k===nk?'next':'';
-    const lab={run:'In the water',done:'Done',next:'Up next'}[state]||'';
-    const ents=m.entries.filter(e=>e.hk===hh.k).sort((a,b)=>(a.lane-b.lane)||((a.offset||0)-(b.offset||0)));
-    h+=`<div class="hz ${state}"><button class="hz-h" data-act="timer" data-v="${esc(hh.k)}"><b>Heat ${hh.planHeat||hh.heat}</b>${hh.test?'<span class="chip later">Test</span>':''}${lab?`<span class="hz-s">${lab}</span>`:''}</button>`;
-    h+=ents.map(e=>{ const sw=m.swims&&m.swims[e.id]; const t=entryTime(sw);
-      return `<div class="hz-l tap" data-act="swimmer" data-v="${esc(e.swimmers[0])}"><span class="hz-n">${e.lane}</span><span class="hz-nm">${e.offset?`<span class="go10">+${e.offset}s</span>`:''}${esc(e.relay?'Relay':shortName(e.swimmers[0]))}</span><span class="hz-t">${sw&&sw.dq?'<span class="chip dq">DQ</span>':t!=null?fmt(t):e.seed!=null?`<span class="muted">${fmt(e.seed)}</span>`:''}</span></div>`; }).join('');
-    h+='</div>'; }
-  if(open) h+='</div></section>';
+  const ids=m.entries.map(e=>e.swimmers[0]).filter(Boolean); const cnt={}; ids.forEach(id=>{ const n=shortName(id); cnt[n]=(cnt[n]||0)+1; });
+  const nm=e=>e.relay?'Relay':(cnt[shortName(e.swimmers[0])]>1?swName(e.swimmers[0]):shortName(e.swimmers[0]));
+  const tm=e=>{ const sw=m.swims&&m.swims[e.id]; if(sw&&sw.dq) return '<span class="dl-t dq">DQ</span>'; const t=entryTime(sw); return t!=null?`<span class="dl-t">${fmt(t)}</span>`:''; };
+  let h=`<div class="hz-top"><span class="small muted"><b>${doneN}</b> of ${heats.length} heats done</span><button class="btn sm" data-act="heats-done" aria-pressed="${hide}">${hide?'Show finished':'Hide finished'}</button></div><div class="hcard-heats">`;
+  // group heats by event and round, in order
+  const groups=[]; for(const hh of heats){ const key=hh.ev+'|'+(hh.round||''); let g=groups[groups.length-1]; if(!g||g.key!==key){ g={key,ev:m.events[hh.ev],round:hh.round,list:[]}; groups.push(g); } g.list.push(hh); }
+  let shown=0;
+  for(const g of groups){
+    const list=g.list.filter(hh=>{ const T=m.timers&&m.timers[hh.k]; return !(hide&&T&&T.done&&hh.k!==runK); }); if(!list.length) continue;
+    const anyB=list.some(hh=>m.entries.some(e=>e.hk===hh.k&&e.offset));
+    h+=`<section class="dheats-wrap"><div class="dheats-top"><div class="disp-title">${esc(evTitle(m,g.ev))}${g.round?' · Round '+g.round:''}</div>${anyB&&m.plan?`<span class="dh-key"><span class="go10">+${m.plan.sendoff}s</span> leaves ${m.plan.sendoff} seconds after the first swimmer</span>`:''}</div><div class="dheats">`;
+    for(const hh of list){ shown++; const k=hh.k; const T=m.timers&&m.timers[k];
+      const state=k===runK?'run':(T&&T.done)?'done':k===nk?'next':'';
+      const lab={run:'In the water',done:'Done',next:'Up next'}[state]||'';
+      const ents=m.entries.filter(e=>e.hk===k); const lanes=[...new Set(ents.map(e=>e.lane))].sort((a,b)=>(a??99)-(b??99));
+      h+=`<div class="dh ${state}"><button class="dh-h" data-act="timer" data-v="${esc(k)}"><span>Heat ${hh.planHeat||hh.heat}${hh.test?' · Test':''}</span>${lab?`<span class="dh-s">${lab}</span>`:''}</button>`;
+      for(const l of lanes){ const a=ents.find(e=>e.lane===l&&!e.offset)||ents.find(e=>e.lane===l); const b=ents.find(e=>e.lane===l&&e!==a);
+        h+=`<div class="dl"><span class="dl-n">${l??'?'}</span><div class="dl-names"><button class="dl-a" data-act="swimmer" data-v="${esc(a.swimmers[0]||'')}"><span>${esc(nm(a))}</span>${tm(a)}</button>${b?`<button class="dl-b" data-act="swimmer" data-v="${esc(b.swimmers[0]||'')}"><span><span class="go10">+${b.offset||(m.plan&&m.plan.sendoff)||''}s</span>${esc(nm(b))}</span>${tm(b)}</button>`:''}</div></div>`; }
+      h+='</div>'; }
+    h+='</div></section>'; }
+  h+='</div>';
   if(!shown) h+=`<div class="card empty"><p style="margin:0">Every heat is finished. Tap Show finished to see them.</p></div>`;
   return h; }
 
