@@ -1056,6 +1056,17 @@ body:not(.tablemode) .tile>.tile-h{margin-bottom:10px}
 
 .clk-close{display:flex;justify-content:flex-end}
 .clk-close .btn svg{width:16px;height:16px;vertical-align:-3px;margin-right:2px}
+
+.ml-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface2,var(--surface));border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.ml-chips{display:flex;gap:4px;flex-wrap:wrap}
+.ml-chips button,.ml-start{min-width:36px;min-height:36px;border-radius:9px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:800;cursor:pointer;padding:0 8px}
+.ml-chips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.ml-start{margin-left:auto;font-size:12px}
+.ml-start[aria-pressed="false"]{border-style:dashed;color:var(--muted)}
+.ml-wait{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px;border:2px dashed var(--line);border-radius:14px;text-align:center}
+.lane.other{opacity:.6}
+.dqbtn{min-height:36px;min-width:56px;border-radius:9px;border:1.5px solid var(--bad);background:transparent;color:var(--bad);font:inherit;font-weight:800;cursor:pointer}
+.dqbtn.on{background:var(--bad);color:#fff}
 </style>
 
 </head>
@@ -1342,7 +1353,7 @@ const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 
 function blank(){ return {v:1,records:[],attendance:{},roster:[],standards:[],meets:{},meetOrder:[],active:null,tags:TAGS_DEFAULT.slice(),coreAt:0,deleted:[],demo:false}; }
 let S=null, localOK=true;
-const APP_V='92';   // keep in step with sw.js CACHE
+const APP_V='93';   // keep in step with sw.js CACHE
 const UI={secOpen:{},tab:'meet',sheet:null,hideDone:true,draft:null,armed:null};
 UI.quickStop=true;
 try{ UI.kiosk=localStorage.getItem(LS+'.kiosk')==='1'; }catch(e){}
@@ -1558,6 +1569,8 @@ function mergeMeet(a,b){
     if(MT.t0===OT.t0){ MT.fin={...(OT.fin||{}),...(MT.fin||{})}; MT.laps=MT.laps||{}; for(const id in (OT.laps||{})) if(!MT.laps[id]||OT.laps[id].length>MT.laps[id].length) MT.laps[id]=clone(OT.laps[id]); if(OT.done&&!MT.done){ MT.done=true; MT.doneAt=OT.doneAt; } }
     else if((OT.t0||0)>(MT.t0||0)) M.timers[k]=clone(OT); }
   for(const k in M.timers) if((gone['t:'+k]||0)>=(M.timers[k].t0||0)&&gone['t:'+k]) delete M.timers[k];
+  /* two phones timing one heat: once every lane has a finish from either phone, the heat is done */
+  for(const k in M.timers){ const T=M.timers[k]; if(!T||T.done||!T.t0) continue; const es=M.entries.filter(e=>e.hk===k); if(es.length&&es.every(e=>T.fin&&T.fin[e.id])){ T.done=true; T.doneAt=Math.max(...es.map(e=>{ const a=T.laps&&T.laps[e.id]; return T.t0+(a&&a.length?a[a.length-1]:0)+((e.offset||0)*1000); })); } }
   for(const id in (O.swims||{})){ const OS=O.swims[id], MS=M.swims[id];
     if(!MS){ M.swims[id]=clone(OS); continue; }
     if(OS.time!=null&&(MS.time==null||(OS.at||0)>(MS.at||0))){ Object.assign(MS,{time:OS.time,splits:clone(OS.splits),splitDist:OS.splitDist,at:OS.at}); if(OS.dq!=null) MS.dq=OS.dq; if(OS.official!=null) MS.official=OS.official; }
@@ -1604,6 +1617,7 @@ function liveRender(){
   UI.lastLive=Date.now();
   const a=document.activeElement; const typing=a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
   if(!typing&&!(UI.sheet&&UI.sheet.type!=='board')) render();
+  else if(!typing&&UI.sheet&&UI.sheet.type==='timer'){ renderSheet(); startTick(); }
   if(UI.sheet&&UI.sheet.type==='board') renderSheet();
 }
 function scheduleFlush(){ if(!sync.db||S.demo) return; clearTimeout(sync.timer); sync.timer=setTimeout(flush,350); }
@@ -3097,6 +3111,9 @@ function openSheet(s){
 /* ---------- the Meet card is just the clock now: results live on the Heats, Places and Display cards ---------- */
 try{ UI.clockOff=localStorage.getItem(DK+'.clockOff')||null; }catch(e){}
 function setClockOff(id){ UI.clockOff=id||null; try{ if(id) localStorage.setItem(DK+'.clockOff',id); else localStorage.removeItem(DK+'.clockOff'); }catch(e){} }
+try{ UI.myLanes=JSON.parse(localStorage.getItem(DK+'.myLanes')||'[]')||[]; UI.noStart=localStorage.getItem(DK+'.noStart')==='1'; }catch(e){ UI.myLanes=[]; }
+function lanesBar(ents){ const mx=Math.max(6,...ents.map(e=>e.lane||0)); const mine=UI.myLanes||[];
+  return `<div class="ml-bar"><span class="small muted">This phone times</span><div class="ml-chips"><button data-act="ml-all" aria-pressed="${!mine.length}">All</button>${Array.from({length:mx},(_,i)=>i+1).map(l=>`<button data-act="ml-lane" data-v="${l}" aria-pressed="${mine.includes(l)}">${l}</button>`).join('')}</div><button class="ml-start" data-act="ml-start" aria-pressed="${!UI.noStart}">${UI.noStart?'Other phone starts':'Starts heats here'}</button></div>`; }
 function clockInCard(){ const m=M(); return !!(m&&!m.canceled&&!m.finished&&!UI.kiosk&&cardShown('meet')&&UI.clockOff!==m.id); }
 function clockKey(m){ if(!m||!m.heats||!m.heats.length) return null; const has=k=>m.heats.some(h=>h.k===k)&&m.entries.some(e=>e.hk===k);
   const run=Object.keys(m.timers||{}).filter(k=>{ const T=m.timers[k]; return T&&T.t0&&!T.done&&has(k); }).sort((a,b)=>m.timers[b].t0-m.timers[a].t0)[0];
@@ -3164,14 +3181,17 @@ function sheetTimer(m,hk){
   h+=`<div class="tm-clock t" data-clock="main">${T&&T.t0?fmt(((T.doneAt||Date.now())-T.t0)/1000):'0.00'}</div>`;
   if(!T||!T.t0){
     if(!(UI.quickStop&&ents.length>1)) h+=`<div class="row" style="justify-content:center"><span class="small muted">Splits every</span><div class="segs" role="group" aria-label="Split distance">${[25,50,100].filter(d=>d<=ev.dist&&ev.dist%d===0).map(d=>`<button data-act="split-dist" data-v="${d}" aria-pressed="${d===splitDist}">${d}</button>`).join('')}</div></div>`;
-    h+=`<button class="startbtn" data-act="tm-start" data-v="${esc(hk)}">Start</button>`;
+    if(UI.noStart) h+=`<div class="ml-wait"><b>Waiting for the start</b><span class="small muted">The heat starts on the other phone and shows up here in a second.</span><button class="btn sm ghost" data-act="tm-start" data-v="${esc(hk)}">Start here instead</button></div>`;
+    else h+=`<button class="startbtn" data-act="tm-start" data-v="${esc(hk)}">Start</button>`;
     if(m.plan&&hh.planHeat) h+=`<button class="btn" data-act="lu-edit-heat" data-v="${esc(hk)}" style="min-height:48px">Add or remove swimmers</button>`;
     h+=`<p class="hint" style="text-align:center">Start on the horn. Starting also tells Deckside this heat is in the water.</p>`;
   }
   const solo=ents.length===1;
   const pairs=ents.some(e=>e.offset);
-  const quick=UI.quickStop&&ents.length>1;
-  if(ents.length>1) h+=`<div class="qs-bar"><button class="qs-toggle" data-act="qs-toggle" aria-pressed="${!!UI.quickStop}"><span class="sw"></span>Quick stop</button>${quick&&T&&T.t0&&(T.log||[]).length?`<button class="btn sm" data-act="qs-undo">Undo last tap</button>`:''}</div>`;
+  const mine=UI.myLanes&&UI.myLanes.length?UI.myLanes:null;
+  const quick=UI.quickStop&&ents.length>1&&!mine;
+  if(!(T&&T.done)) h+=lanesBar(ents);
+  if(ents.length>1&&!mine) h+=`<div class="qs-bar"><button class="qs-toggle" data-act="qs-toggle" aria-pressed="${!!UI.quickStop}"><span class="sw"></span>Quick stop</button>${quick&&T&&T.t0&&(T.log||[]).length?`<button class="btn sm" data-act="qs-undo">Undo last tap</button>`:''}</div>`;
   if(quick){ h+=quickPad(m,ents,T,laps,pairs);
     if(T&&T.done){ const rs=ents.map(e=>({e,t:entryTime(m.swims&&m.swims[e.id])})).sort((a,b)=>(a.t??1e9)-(b.t??1e9));
       h+=`<div class="list">${rs.map((r,i)=>`<button class="srow" data-act="entry" data-v="${esc(r.e.id)}"><span class="clock">${i+1}<small>L${r.e.lane}${r.e.offset?' · 2nd':''}</small></span><span class="who"><b>${esc(r.e.relay?'Relay':swName(r.e.swimmers[0]))}</b><span>Tap for notes</span></span><span class="res"><span class="t">${fmt(r.t)}</span>${isRecordSwim(m,r.e)?'<span class="recchip">RECORD</span>':pendingFor(m,r.e)?'<span class="recchip" style="opacity:.75">RECORD?</span>':''}${r.t!=null&&!r.e.relay?cutChip(r.e.swimmers[0],m.events[r.e.ev],entryCourse(m,m.events[r.e.ev]),r.t):''}${(pb=>pb&&r.t!=null?`<span class="small ${dClass(r.t-pb.time)}">${fmtDiff(r.t-pb.time)}</span>`:'')(m.practice?priorBest(r.e.swimmers[0],ev,entryCourse(m,ev),r.e.id,(m.swims[r.e.id]||{}).at,true):null)}</span></button>`).join('')}</div>`; }
@@ -3186,6 +3206,8 @@ function sheetTimer(m,hk){
     const off=e.offset||0;
     const arr=T&&T.laps[e.id]||[]; const fin=T&&T.fin[e.id]; const sw=m.swims&&m.swims[e.id];
     const nm=e.relay?'Relay '+(e.team||''):swName(e.swimmers[0]);
+    const dqBtn=`<button class="dqbtn ${sw&&sw.dq?'on':''}" data-act="tm-dq" data-v="${esc(e.id)}" aria-pressed="${!!(sw&&sw.dq)}">${sw&&sw.dq?'DQ ✓':'DQ'}</button>`;
+    if(mine&&!mine.includes(e.lane)){ h+=`<div class="lane other"><div class="lane-top"><div><b>${esc(nm)}</b><div class="small muted">Lane ${e.lane??'?'} · timed on the other phone</div></div><span class="t">${sw&&sw.dq?'DQ':fin?fmt(arr[arr.length-1]/1000):(T&&T.t0?'…':'—')}</span></div></div>`; continue; }
     const n=arr.length; const isLast=n===laps-1;
     const lapTxt=arr.map((ms,j)=>`<span>${(j+1)*splitDist}: <b>${fmt(ms/1000)}</b>${j>0?' ('+fmt((ms-arr[j-1])/1000)+')':''}</span>`).join('');
     if(ents.length>=6){
@@ -3193,12 +3215,13 @@ function sheetTimer(m,hk){
       h+=`<div class="lane"><div class="lane-top"><b>${esc(nm)}</b><span class="t" ${fin?'':`data-clock="${esc(e.id)}" data-off="${off}"`}>${fin?fmt(arr[arr.length-1]/1000):(T&&T.t0?clockText((Date.now()-T.t0)/1000-off):'')}</span></div>
         <div class="dmeta"><span>L${e.lane}${pairs?(off?' · 2nd':' · 1st'):''}${lastS&&!fin?' · '+lastS:''}</span>${T&&T.t0&&n?`<button class="btn sm ghost" data-act="tm-undo" data-v="${esc(e.id)}">Undo</button>`:''}</div>
         ${T&&T.t0&&!fin&&!T.done?`<button class="splitbtn ${isLast?'fin':''}" data-act="tm-split" data-v="${esc(e.id)}">${isLast?'Finish':'Split '+(n+1)+'/'+laps}</button>`:''}
-        ${fin?`<button class="btn sm" data-act="entry" data-v="${esc(e.id)}">Notes</button>`:''}</div>`;
+        <div class="row" style="gap:6px">${fin?`<button class="btn sm" data-act="entry" data-v="${esc(e.id)}">Notes</button>`:''}${T&&T.t0?dqBtn:''}</div></div>`;
       continue;
     }
     h+=`<div class="lane ${solo?'solo':''}"><div class="lane-top"><div><b>${esc(nm)}</b><div class="small muted">${e.lane!=null?'Lane '+e.lane:'Lane ?'}${pairs?(off?' · 2nd, +'+off+'s':' · 1st'):''} · ${m.practice?(()=>{const pb=priorBest(e.swimmers[0],ev,entryCourse(m,ev),e.id,sw&&sw.at||Date.now(),true);return 'best '+(pb?fmt(pb.time):'—');})():'seed '+esc(e.seed!=null?fmt(e.seed):'NT')}${e.relay&&e.swimmers.length?' · '+e.swimmers.map(shortName).map(esc).join(', '):''}</div></div>
       <span class="t" ${fin?'':`data-clock="${esc(e.id)}" data-off="${off}"`}>${fin?fmt(arr[arr.length-1]/1000):(T&&T.t0?clockText((Date.now()-T.t0)/1000-off):'—')}</span></div>`;
     if(T&&T.t0&&!fin&&!T.done) h+=`<button class="splitbtn ${isLast?'fin':''}" data-act="tm-split" data-v="${esc(e.id)}">${isLast?'Finish':'Split '+(n+1)+'/'+laps}</button>`;
+    if(T&&T.t0) h+=`<div class="row" style="justify-content:flex-end">${dqBtn}</div>`;
     if(lapTxt) h+=`<div class="laps">${lapTxt}</div>`;
     if(T&&T.t0) h+=`<div class="lane-ctl">${fin?`<button class="btn sm primary" data-act="entry" data-v="${esc(e.id)}">Notes &amp; cuts</button>`:(T.done?'<span class="small muted">No time</span>':`<button class="btn sm" data-act="tm-finish" data-v="${esc(e.id)}">Finish now</button>`)}<button class="btn sm ghost" data-act="tm-undo" data-v="${esc(e.id)}" ${n?'':'disabled'}>Undo split</button></div>`;
     if(fin&&sw&&!e.relay&&isRecordSwim(m,e)) h+=`<div class="row"><span class="recchip">NEW RECORD ✓</span></div>`;
@@ -3681,6 +3704,10 @@ document.addEventListener('click',async ev=>{
     case 'split-dist': UI.splitPref=+v; renderSheet(); break;
     case 'tm-start': { m.timers=m.timers||{}; const hh=m.heats.find(x=>x.k===v); const e0=m.events[hh.ev]; const sd=Math.min(UI.splitPref||(e0.dist<=50?25:50),e0.dist); const sdOk=e0.dist%sd===0?sd:e0.dist;
       if(m.board) m.board=null; m.timers[v]={hk:v,t0:Date.now(),splitDist:sdOk,laps:{},fin:{}}; m.now={k:v,at:m.timers[v].t0}; hh.at=hh.at||m.timers[v].t0; buzz(); keepAwake(true); save(m.id); renderSheet(); break; }
+    case 'ml-all': UI.myLanes=[]; try{ localStorage.setItem(DK+'.myLanes','[]'); }catch(e){} renderSheet(); break;
+    case 'ml-lane': { const l=+v; const a=new Set(UI.myLanes||[]); a.has(l)?a.delete(l):a.add(l); UI.myLanes=[...a].sort((x,y)=>x-y); try{ localStorage.setItem(DK+'.myLanes',JSON.stringify(UI.myLanes)); }catch(e){} renderSheet(); break; }
+    case 'ml-start': UI.noStart=!UI.noStart; try{ localStorage.setItem(DK+'.noStart',UI.noStart?'1':'0'); }catch(e){} renderSheet(); break;
+    case 'tm-dq': { m.swims=m.swims||{}; const sw=m.swims[v]=m.swims[v]||{tags:[],note:''}; sw.dq=!sw.dq; sw.at=Date.now(); save(m.id); toast(sw.dq?'Marked DQ':'DQ removed'); renderSheet(); break; }
     case 'tm-split': case 'tm-finish': { if(act==='tm-split'&&Date.now()-lastFastTap<800) break; doSplit(m,v,act==='tm-finish'||b.dataset.finish==='1',Date.now()); break; }
     case 'qs-toggle': UI.quickStop=!UI.quickStop; try{ localStorage.setItem(DK+'.qs',UI.quickStop?'1':'0'); }catch(e){} renderSheet(); break;
     case 'qs-undo': { const s0=UI.sheet; const T=m.timers&&m.timers[s0&&s0.v]; if(!T||!T.log||!T.log.length) break; const eid=T.log.pop(); undoSplit(m,eid); break; }
