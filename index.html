@@ -1366,7 +1366,7 @@ const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 
 function blank(){ return {v:1,records:[],attendance:{},roster:[],standards:[],meets:{},meetOrder:[],active:null,tags:TAGS_DEFAULT.slice(),coreAt:0,deleted:[],demo:false}; }
 let S=null, localOK=true;
-const APP_V='97';   // keep in step with sw.js CACHE
+const APP_V='98';   // keep in step with sw.js CACHE
 const UI={secOpen:{},tab:'meet',sheet:null,hideDone:true,draft:null,armed:null};
 UI.quickStop=true;
 try{ UI.kiosk=localStorage.getItem(LS+'.kiosk')==='1'; }catch(e){}
@@ -3160,7 +3160,7 @@ function openSheet(s){
 try{ UI.clockOff=localStorage.getItem(DK+'.clockOff')||null; }catch(e){}
 function setClockOff(id){ UI.clockOff=id||null; try{ if(id) localStorage.setItem(DK+'.clockOff',id); else localStorage.removeItem(DK+'.clockOff'); }catch(e){} }
 try{ UI.myLanes=JSON.parse(localStorage.getItem(DK+'.myLanes')||'[]')||[]; UI.noStart=localStorage.getItem(DK+'.noStart')==='1'; }catch(e){ UI.myLanes=[]; }
-function lanesBar(ents){ const mx=Math.max(6,...ents.map(e=>e.lane||0)); const mine=UI.myLanes||[];
+function lanesBar(ents,m){ const mx=Math.max((m&&m.plan&&m.plan.L)||(m&&m.lanes)||0,...ents.map(e=>e.lane||0),1); const mine=UI.myLanes||[];
   return `<div class="ml-bar"><span class="small muted">This phone times</span><div class="ml-chips"><button data-act="ml-all" aria-pressed="${!mine.length}">All</button>${Array.from({length:mx},(_,i)=>i+1).map(l=>`<button data-act="ml-lane" data-v="${l}" aria-pressed="${mine.includes(l)}">${l}</button>`).join('')}</div><button class="ml-start" data-act="ml-start" aria-pressed="${!UI.noStart}">${UI.noStart?'Other phone starts':'Starts heats here'}</button></div>`; }
 function clockInCard(){ const m=M(); return !!(m&&!m.canceled&&!m.finished&&!UI.kiosk&&cardShown('meet')&&UI.clockOff!==m.id); }
 function clockKey(m){ if(!m||!m.heats||!m.heats.length) return null; const has=k=>m.heats.some(h=>h.k===k)&&m.entries.some(e=>e.hk===k);
@@ -3245,7 +3245,7 @@ function sheetTimer(m,hk){
   const pairs=ents.some(e=>e.offset);
   const mine=UI.myLanes&&UI.myLanes.length?UI.myLanes:null;
   const quick=UI.quickStop&&ents.length>1&&!mine;
-  if(!(T&&T.done)) h+=lanesBar(ents);
+  if(!(T&&T.done)) h+=lanesBar(ents,m);
   if(ents.length>1&&!mine) h+=`<div class="qs-bar"><button class="qs-toggle" data-act="qs-toggle" aria-pressed="${!!UI.quickStop}"><span class="sw"></span>Quick stop</button>${quick&&T&&T.t0&&(T.log||[]).length?`<button class="btn sm" data-act="qs-undo">Undo last tap</button>`:''}</div>`;
   if(quick){ h+=quickPad(m,ents,T,laps,pairs);
     if(T&&T.done){ const rs=ents.map(e=>({e,t:entryTime(m.swims&&m.swims[e.id])})).sort((a,b)=>(a.t??1e9)-(b.t??1e9));
