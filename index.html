@@ -1366,7 +1366,7 @@ const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 
 function blank(){ return {v:1,records:[],attendance:{},roster:[],standards:[],meets:{},meetOrder:[],active:null,tags:TAGS_DEFAULT.slice(),coreAt:0,deleted:[],demo:false}; }
 let S=null, localOK=true;
-const APP_V='95';   // keep in step with sw.js CACHE
+const APP_V='96';   // keep in step with sw.js CACHE
 const UI={secOpen:{},tab:'meet',sheet:null,hideDone:true,draft:null,armed:null};
 UI.quickStop=true;
 try{ UI.kiosk=localStorage.getItem(LS+'.kiosk')==='1'; }catch(e){}
@@ -1906,10 +1906,10 @@ function render(){ paintSpace();
   const fb=$('#fsbtn'); if(fb) fb.hidden=!document.fullscreenEnabled;
   const keep={}; main.querySelectorAll('.tbody[data-card]').forEach(t=>{ keep[t.dataset.card]=[t.scrollTop,t.scrollLeft]; });
   main.innerHTML=`<div class="view">${fixBFreeBanner()}${fixB2Banner()}${h}</div>`;
-  main.querySelectorAll('.tbody[data-card]').forEach(t=>{ const k=keep[t.dataset.card]; if(k){ t.scrollTop=k[0]; t.scrollLeft=k[1]; } });
   { const alias={cuts:'qualifying times',records:'records'}; main.querySelectorAll('.tile').forEach(t=>{ const id=t.dataset.card; const h=t.querySelector('.tbody h2'); if(!h||!h.parentElement.classList.contains('sec-h')) return; const tx=h.textContent.trim().toLowerCase(); if(tx!==cardName(id).toLowerCase()&&tx!==alias[id]) return;
     const sh=h.parentElement, hd=t.querySelector('.tile-h'), x=document.createElement('span'); x.className='tile-x';
     [...sh.children].forEach(c=>{ if(c!==h) x.appendChild(c); }); if(x.childNodes.length) hd.insertBefore(x,hd.querySelector('.tile-grip')||hd.querySelector('.tile-up')); sh.remove(); }); }
+  main.querySelectorAll('.tbody[data-card]').forEach(t=>{ const k=keep[t.dataset.card]; if(k){ t.scrollTop=k[0]; t.scrollLeft=k[1]; } });
   { const rb=main.querySelector('.rnav [aria-pressed="true"]'); if(rb){ const nv=rb.parentNode; nv.scrollLeft=Math.max(0,rb.offsetLeft-nv.offsetLeft-(nv.clientWidth-rb.offsetWidth)/2); } }
   if(UI.sheet) dockSheet();
   if(document.querySelector('.tbody[data-card="meet"] .clk')) startTick();
@@ -2744,7 +2744,8 @@ function fmtSec(x){ return x>=60?fmt(x):x.toFixed(2); }
 function viewTop5(){
   const cat=UI.topCat||'AM'; const grp=cat[0], g=cat[1];
   const kids=team().filter(s=>s.group===grp&&s.gender===g); const bt={}; kids.forEach(s=>bt[s.id]=bestTimesOf(s.id));
-  const recs=(S.records||[]).filter(r=>r.grp===grp&&r.g===g&&r.name&&r.time!=null);
+  const pinned=new Set((S.records||[]).filter(r=>r.pin).map(r=>r.grp+r.g+'|'+r.ev+'|'+(r.kind||'meet')));
+  const recs=(S.records||[]).filter(r=>r.grp===grp&&r.g===g&&r.name&&r.time!=null&&!r.pin&&!pinned.has(r.grp+r.g+'|'+r.ev+'|'+(r.kind||'meet')));
   let h=`<section class="stack"><div class="sec-h"><h2>Top 5</h2><span class="small muted">${kids.length} swimmers</span></div><div class="rfilter" role="group" aria-label="Group">${REC_CATS.map(([a,b,nm])=>`<button data-act="top-cat" data-v="${a+b}" aria-pressed="${cat===a+b}">${nm}</button>`).join('')}</div><div class="top5">`;
   for(const [k,nm] of REC_EVENTS){ const [d,st]=k.split(' '); const key=TKEY(+d,st,'SCY');
     const rows=kids.map(s=>({id:s.id,name:shortName(s.id),t:bt[s.id][key]})).filter(x=>x.t!=null&&x.t<1e9);
@@ -3851,7 +3852,7 @@ document.addEventListener('click',async ev=>{
     case 'rec-save': { const [gk,ev,kind]=v.split('|'); const name=(($('#rs-name')||{}).value||'').trim(); const t=parseTime((($('#rs-time')||{}).value||'').trim()); const date=(($('#rs-date')||{}).value||'')||todayISO();
       if(!name){ toast('Add the swimmer'); break; } if(t==null){ toast('Use a time like 32.45 or 1:05.29'); break; }
       const cat=REC_CATS.find(c=>c[0]+c[1]===gk); if(!cat) break;
-      S.records=(S.records||[]).filter(r=>!((r.grp+r.g)===gk&&r.ev===ev&&(r.kind||'meet')===kind&&r.pin));
+      S.records=(S.records||[]).filter(r=>!((r.grp+r.g)===gk&&r.ev===ev&&(r.kind||'meet')===kind));
       S.records.push({grp:cat[0],g:cat[1],ev,kind,name,time:t,date,pin:true,at:Date.now()}); save('core'); closeSheet(); toast('Record saved'); break; }
     case 'rec-clear': { if(!arm('rec-clear')){ renderSheet(); break; } const [gk,ev,kind]=v.split('|'); const now=Date.now();
       S.records=(S.records||[]).filter(r=>!((r.grp+r.g)===gk&&r.ev===ev&&(r.kind||'meet')===kind));
