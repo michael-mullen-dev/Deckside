@@ -1366,7 +1366,7 @@ const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 
 function blank(){ return {v:1,records:[],attendance:{},roster:[],standards:[],meets:{},meetOrder:[],active:null,tags:TAGS_DEFAULT.slice(),coreAt:0,deleted:[],demo:false}; }
 let S=null, localOK=true;
-const APP_V='93';   // keep in step with sw.js CACHE
+const APP_V='94';   // keep in step with sw.js CACHE
 const UI={secOpen:{},tab:'meet',sheet:null,hideDone:true,draft:null,armed:null};
 UI.quickStop=true;
 try{ UI.kiosk=localStorage.getItem(LS+'.kiosk')==='1'; }catch(e){}
@@ -1499,7 +1499,25 @@ function withTimeout(p,ms){ return Promise.race([p,new Promise((_,rej)=>setTimeo
 const CFG_KEY=LS+'.supa';
 function supaCfg(){ try{ return JSON.parse(localStorage.getItem(CFG_KEY)||'null'); }catch(e){ return null; } }
 let supa=null;
-const TBL='deckside_docs';
+const TBL='deckside_docs', TEAM_TBL='deckside_members';
+/* this device keeps one team's data at a time; when it switches to a different team's data, clear the local copy first so two teams never mix */
+function dataOwnerChanged(uid){ let prev=null; try{ prev=localStorage.getItem(LS+'.dataUid'); }catch(e){}
+  if(prev===uid) return false;
+  if(prev==null&&uid===sync.me){ try{ localStorage.setItem(LS+'.dataUid',uid); }catch(e){} return false; }
+  try{ const keep=['.supa','.auth','.theme','.table','.hiddenCards','.autoHide','.dmode','.tab','.secOpen','.hide','.kiosk'].map(x=>LS+x);
+    Object.keys(localStorage).filter(k=>k.startsWith(LS)&&!keep.includes(k)).forEach(k=>localStorage.removeItem(k)); localStorage.setItem(LS+'.dataUid',uid); }catch(e){}
+  location.reload(); return true; }
+async function loadCoaches(){ if(!sync.db||sync.team) return; try{ const r=await sync.db.from(TEAM_TBL).select('member_email,created_at').eq('owner_id',sync.me).order('created_at'); UI.coaches=r.error?null:(r.data||[]); UI.coachErr=r.error?String(r.error.message||r.error.code||''):null; }catch(e){ UI.coaches=null; } if(UI.tab==='setup') render(); }
+function coachesBox(){
+  if(sync.team) return `<div class="banner" style="margin:0"><span><b>You're coaching on ${esc(sync.team.name)}'s team.</b> Rosters, times, records and meet days are shared with them.</span><button class="btn sm ${UI.armed==='team-leave'?'armed':''}" data-act="team-leave">${UI.armed==='team-leave'?'Tap again to leave':'Leave team'}</button></div>`;
+  const list=UI.coaches;
+  let h=`<div class="card stack"><div class="sec-h"><h2>Coaches</h2><span class="small muted">share everything on your team</span></div>
+    <p class="hint" style="margin:0">Invite an assistant by the email they sign up with. They see and edit the same rosters, times, records and meet days as you, on every team.</p>`;
+  if(list===null||list===undefined) h+=`<p class="hint" style="margin:0">${UI.coachErr?'Coach invites need a one-time setup in Supabase first.':'Loading…'}</p>`;
+  else if(list.length) h+=`<div class="list">${list.map(c=>`<div class="row" style="justify-content:space-between"><span><b>${esc(c.member_email)}</b></span><button class="btn sm danger ${UI.armed==='coach-rm-'+c.member_email?'armed':''}" data-act="coach-rm" data-v="${esc(c.member_email)}">${UI.armed==='coach-rm-'+c.member_email?'Tap again to remove':'Remove'}</button></div>`).join('')}</div>`;
+  else h+=`<p class="small muted" style="margin:0">No coaches yet.</p>`;
+  h+=`<div class="row"><input id="coach-email" type="email" autocomplete="off" placeholder="assistant@email.com" style="flex:1;min-width:0"><button class="btn primary" data-act="coach-add">Invite</button></div></div>`;
+  return h; }
 function ref(key){ key=KP+key; return {
   async get(){ const {data,error}=await supa.from(TBL).select('data').eq('user_id',sync.uid).eq('key',key).maybeSingle(); if(error) throw error; return {exists:!!data,data:()=>data&&data.data,metadata:{hasPendingWrites:false}}; },
   async set(d){ const {error}=await supa.from(TBL).upsert({user_id:sync.uid,key,data:d,updated_at:new Date().toISOString()}); if(error) throw error; },
@@ -1664,7 +1682,12 @@ async function initSync(){
       supa.auth.onAuthStateChange(ev=>{ if(ev==='PASSWORD_RECOVERY'){ UI.wMode='reset'; UI.showWelcome=true; render(); } }); }
     const {data}=await supa.auth.getSession(); const session=data&&data.session;
     if(!session){ sync.email=null; return; }
-    sync.db=supa; sync.uid=session.user.id; sync.email=session.user.email; sync.profile=session.user.user_metadata||{}; setWelcomed(); await checkOwner();
+    sync.db=supa; sync.me=session.user.id; sync.uid=session.user.id; sync.email=session.user.email; sync.profile=session.user.user_metadata||{}; sync.team=null; setWelcomed(); await checkOwner();
+    /* invited coaches work on the head coach's team: same rosters, times, records and meet days */
+    try{ const r=await supa.from(TEAM_TBL).select('owner_id,owner_name').eq('member_email',String(session.user.email||'').toLowerCase()).order('created_at',{ascending:false}).limit(1);
+      if(!r.error&&r.data&&r.data.length&&r.data[0].owner_id!==sync.me){ sync.uid=r.data[0].owner_id; sync.team={owner:r.data[0].owner_id,name:r.data[0].owner_name||'your head coach'}; } }catch(e){}
+    if(dataOwnerChanged(sync.uid)) return;
+    if(!sync.team) loadCoaches();
     render(); await pull();
   }catch(e){ if(sync.db) setSync('offline'); }
 }
@@ -1719,7 +1742,7 @@ function viewWelcome(){ const mode=UI.wMode||'up', busy=UI.wBusy?'disabled':'';
 async function sbSignOut(){
   try{ if(supa) await supa.auth.signOut(); }catch(e){}
   if(subs.core){ subs.core(); subs.core=null; } if(subs.meet){ subs.meet(); subs.meet=null; subs.meetId=null; }
-  sync.db=null; sync.uid=null; sync.email=null; sync.profile=null; sync.owner=false; S.testMode=false; sync.status='local'; render(); toast('Signed out. Data stays on this device.');
+  sync.db=null; sync.uid=null; sync.me=null; sync.team=null; UI.coaches=null; sync.email=null; sync.profile=null; sync.owner=false; S.testMode=false; sync.status='local'; render(); toast('Signed out. Data stays on this device.');
 }
 /* fallback refresh for the display screen if live updates drop */
 setInterval(()=>{ if(sync.db&&document.visibilityState==='visible'&&cardShown('display')&&!subs.core) pull(); },20000);
@@ -3099,7 +3122,7 @@ function viewSetup(m){
     ${sync.db?`<div class="stack"><div class="row" style="justify-content:space-between"><span><b>Signed in · synced</b><br><span class="small muted">${esc(sync.email||'')}</span></span><button class="btn" data-act="sb-signout">Sign out</button></div>
       <div class="grid2"><label class="f">Your name<input id="p-name" autocomplete="name" value="${esc((sync.profile&&sync.profile.name)||'')}" placeholder="Coach Sam Rivera"></label>
       <label class="f">Team or club<input id="p-team" autocomplete="organization" value="${esc((sync.profile&&sync.profile.team)||'')}" placeholder="e.g. Riverside Swim Club"></label></div>
-      <div class="row"><button class="btn primary" data-act="prof-save">Save profile</button></div></div>`:`
+      <div class="row"><button class="btn primary" data-act="prof-save">Save profile</button></div>${coachesBox()}</div>`:`
     <div class="row"><button class="btn primary" data-act="open-welcome" data-v="in">Sign in</button><button class="btn" data-act="open-welcome" data-v="up">Create account</button></div>
     <p class="hint" style="margin:0">Use the same account on your phone and the pool computer.</p>`}
     <div class="backup-box"><div><b>Backup</b><span class="small muted">${S.lastBackup?'Last downloaded '+esc(new Date(S.lastBackup).toLocaleDateString([], {month:'short',day:'numeric'})):'Keep a copy of everything on this device'}</span></div><div class="row"><button class="btn primary" data-act="dl-backup">Download backup</button><button class="btn" data-act="sheet" data-v="restore">Restore</button><button class="btn ghost" data-act="copy-backup">Copy as text</button></div></div></div>`;
@@ -3643,6 +3666,13 @@ document.addEventListener('click',async ev=>{
       break; }
     case 'card-hide': { if(UI.hidden.includes(v)) UI.hidden=UI.hidden.filter(x=>x!==v); else { if(UI.hidden.length>=CARD_IDS.length-1){ toast('Keep at least one card'); break; } UI.hidden.push(v); if(UI.table.includes(v)) sendUp(v); } saveHidden(); render(); break; }
     case 'autohide': UI.autoHide=v==='1'; try{ localStorage.setItem(LS+'.autoHide',UI.autoHide?'1':'0'); }catch(e){} render(); break;
+    case 'coach-add': { const em=String(($('#coach-email')||{}).value||'').trim().toLowerCase(); if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ toast('Enter their email'); break; }
+      if(em===String(sync.email||'').toLowerCase()){ toast("That's your own email"); break; }
+      const r=await sync.db.from(TEAM_TBL).insert({owner_id:sync.me,member_email:em,owner_name:(sync.profile&&sync.profile.name)||sync.email||''});
+      if(r.error){ toast(String(r.error.code)==='23505'?'Already invited':'Invite failed. Run the Supabase setup first.'); break; }
+      toast('Invited '+em+'. They sign in with that email to join.'); loadCoaches(); break; }
+    case 'coach-rm': { if(!arm('coach-rm-'+v)){ render(); break; } const r=await sync.db.from(TEAM_TBL).delete().eq('owner_id',sync.me).eq('member_email',v); if(r.error){ toast("Couldn't remove"); break; } toast('Removed '+v); loadCoaches(); break; }
+    case 'team-leave': { if(!arm('team-leave')){ render(); break; } await sync.db.from(TEAM_TBL).delete().eq('owner_id',sync.team.owner).eq('member_email',String(sync.email||'').toLowerCase()); sync.team=null; dataOwnerChanged(sync.me); break; }
     case 'card-up': sendUp(v); if(UI.sheet&&!sheetDocked()&&v==='meet'){ UI.sheet=null; $('#sheet').hidden=true; } render(); break;
     case 'heats-done': UI.heatsHideDone=!UI.heatsHideDone; render(); break;
     case 'pl-grp': UI.plGrp=v; render(); break;
