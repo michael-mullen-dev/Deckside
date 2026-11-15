@@ -1366,7 +1366,7 @@ const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 
 function blank(){ return {v:1,records:[],attendance:{},roster:[],standards:[],meets:{},meetOrder:[],active:null,tags:TAGS_DEFAULT.slice(),coreAt:0,deleted:[],demo:false}; }
 let S=null, localOK=true;
-const APP_V='96';   // keep in step with sw.js CACHE
+const APP_V='97';   // keep in step with sw.js CACHE
 const UI={secOpen:{},tab:'meet',sheet:null,hideDone:true,draft:null,armed:null};
 UI.quickStop=true;
 try{ UI.kiosk=localStorage.getItem(LS+'.kiosk')==='1'; }catch(e){}
@@ -1633,6 +1633,9 @@ function watchMeet(){
     if(ms!==meetSig(d)){ sync.dirty.add('meet_'+id); scheduleFlush(); }   // this device had something the other didn't
   },()=>{ subs.meet=null; subs.meetId=null; });
 }
+/* a meet day you closed on this device stays closed here, even if another phone still has it open */
+function closedHere(id){ if(!id) return false; try{ const c=JSON.parse(localStorage.getItem(DK+'.closed')||'{}'); return !!c[id]&&Date.now()-c[id]<12*36e5; }catch(e){ return false; } }
+function markClosed(id){ try{ const c=JSON.parse(localStorage.getItem(DK+'.closed')||'{}'); for(const k in c) if(Date.now()-c[k]>12*36e5) delete c[k]; c[id]=Date.now(); localStorage.setItem(DK+'.closed',JSON.stringify(c)); }catch(e){} }
 async function adoptCore(rc){
   const r=takeCore(rc); restoreDraft(false); if(r.ahead){ sync.dirty.add('core'); scheduleFlush(); }
   for(const mi of rc.meetIndex||[]){ if(S.deleted.includes(mi.id)) continue; const lm=S.meets[mi.id];
@@ -1640,7 +1643,7 @@ async function adoptCore(rc){
   for(const id of S.deleted) delete S.meets[id];
   S.meetOrder=[...new Set([...(rc.meetOrder||[]).filter(id=>S.meets[id]),...Object.keys(S.meets)])];
   const following=(UI.sheet&&UI.sheet.type==='board')||cardShown('display');
-  if((following||!S.meets[S.active])&&S.meets[rc.active]) S.active=rc.active;
+  if((following||!S.meets[S.active])&&S.meets[rc.active]&&!closedHere(rc.active)) S.active=rc.active;
   if(S.active&&!S.meets[S.active]) S.active=S.meetOrder[0]||null;
   writeLocal(); watchMeet(); liveRender(); discoverMeets();
 }
@@ -1794,7 +1797,7 @@ async function pull(){
     if(snap.exists){
       const rc=snap.data();
       const hadActive=S.active; const r=takeCore(rc); restoreDraft(!hadActive);
-      if(!S.meets[S.active]) S.active=rc.active;
+      if(!S.meets[S.active]&&!closedHere(rc.active)) S.active=rc.active;
       if(r.ahead) sync.dirty.add('core');
       const idx=rc.meetIndex||[];
       for(const mi of idx){
@@ -3780,7 +3783,7 @@ document.addEventListener('click',async ev=>{
     case 'att-rm': { if(!arm('att-rm-'+v)){ render(); break; } const sm=swimmer(v); if(sm){ sm.out=Date.now(); for(const d in (S.attendance||{})) if(d>=todayISO()) S.attendance[d]=S.attendance[d].filter(x=>x!==v); } save('core'); render(); toast(swName(v)+' removed from the roster. Past times are kept.'); break; }
     case 'sw-back': { const sm=swimmer(v); if(sm){ delete sm.out; save('core'); } UI.sheet?renderSheet():null; render(); toast(swName(v)+' is back on the roster'); break; }
     case 'finish-meet': { if(!m||m.practice) break; const fin=v!=='0'; m.finished=fin; if(fin){ m.now=null; m.finishedAt=Date.now(); } else delete m.finishedAt; m.updatedAt=Date.now(); save(m.id); window.scrollTo(0,0); render(); toast(fin?'Meet finished. Everything is saved.':'Timing reopened.'); break; }
-    case 'close-day': { if(!m) break; const hadTest=m.test||m.heats.some(h=>h.test); S.testMode=false; const what=m.practice?(m.plan?'Race day':'Practice'):'Meet'; S.active=null; UI.lineup=null; UI.tab='meet'; save('core'); window.scrollTo(0,0); render(); toast(hadTest?what+' closed. Test sets are kept in Saved meets › Tests, and you can count them anytime.':what+' saved and closed. It\'s in Settings › Saved meets.'); break; }
+    case 'close-day': { if(!m) break; const hadTest=m.test||m.heats.some(h=>h.test); S.testMode=false; const what=m.practice?(m.plan?'Race day':'Practice'):'Meet'; markClosed(m.id); S.active=null; UI.clock=null; if(UI.sheet){ UI.sheet=null; $('#sheet').hidden=true; } try{ localStorage.removeItem(DK+'.sheet'); }catch(e){} UI.lineup=null; UI.tab='meet'; save('core'); window.scrollTo(0,0); render(); toast(hadTest?what+' closed. Test sets are kept in Saved meets › Tests, and you can count them anytime.':what+' saved and closed. It\'s in Settings › Saved meets.'); break; }
     case 'open-saved': { UI.tab='setup'; UI.secOpen.meets=true; if(UI.sheet){ UI.sheet=null; $('#sheet').hidden=true; } render(); setTimeout(()=>{ const el=document.querySelector('details[data-sec=meets]'); if(el) el.scrollIntoView({block:'start'}); },30); break; }
     case 'gear': { UI.tab=UI.tab==='setup'?(UI.lastCard||UI.table[UI.table.length-1]||''):'setup'; if(UI.sheet){ UI.sheet=null; $('#sheet').hidden=true; } render(); window.scrollTo(0,0); break; }
     case 'hide-setup': { UI.hideSetup=!UI.hideSetup; try{ localStorage.setItem(LS+'.hideSetup',UI.hideSetup?'1':'0'); }catch(e){} if(UI.hideSetup){ UI.tab='meet'; try{ localStorage.setItem(LS+'.tab','meet'); }catch(e){} toast('Setup is hidden. Tap the gear at the top to get back to it.'); } render(); break; }
