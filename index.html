@@ -1366,7 +1366,7 @@ const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 
 function blank(){ return {v:1,records:[],attendance:{},roster:[],standards:[],meets:{},meetOrder:[],active:null,tags:TAGS_DEFAULT.slice(),coreAt:0,deleted:[],demo:false}; }
 let S=null, localOK=true;
-const APP_V='94';   // keep in step with sw.js CACHE
+const APP_V='95';   // keep in step with sw.js CACHE
 const UI={secOpen:{},tab:'meet',sheet:null,hideDone:true,draft:null,armed:null};
 UI.quickStop=true;
 try{ UI.kiosk=localStorage.getItem(LS+'.kiosk')==='1'; }catch(e){}
@@ -1923,11 +1923,10 @@ function viewHome(){ const d=new Date(); const today=todayISO(); const here=attL
   const upcoming=real.filter(x=>(x.date||'')>=today).sort((a,b)=>(a.date||'').localeCompare(b.date||''))[0];
   const hr=d.getHours(); const hi=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
   let h=`<section class="home-hero"><div class="pd-l"><div class="eyebrow">${esc(d.toLocaleDateString([], {weekday:'long',month:'long',day:'numeric'}))}</div><div class="pd-title">${hi}, Coach${coachFirst()?' '+esc(coachFirst()):''}</div>${sync.db&&!coachFirst()?'<button class="btn sm" data-act="open-profile" style="align-self:flex-start;margin-top:6px">Add your name and team</button>':''}
-    <div class="pd-stats"><span><b>${here}</b> here today</span><span><b>${g.pct}%</b> toward the ${g.target}% goal</span>${upcoming?`<span class="pd-saved">Next meet: ${esc(upcoming.name||'Meet')} · ${esc(new Date(upcoming.date+'T12:00:00').toLocaleDateString([], {weekday:'short',month:'short',day:'numeric'}))}</span>`:''}</div></div>
+    <div class="pd-stats"><span><b>${here}</b> here today</span>${upcoming?`<span class="pd-saved">Next meet: ${esc(upcoming.name||'Meet')} · ${esc(new Date(upcoming.date+'T12:00:00').toLocaleDateString([], {weekday:'short',month:'short',day:'numeric'}))}</span>`:''}</div></div>
     <div class="home-acts"><button class="btn primary" data-act="quick">Practice timer</button><button class="btn" data-act="sheet" data-v="import">Load heat sheet</button><button class="btn" data-act="open-results">Load results</button></div></section>`;
   h+=`<div class="home-grid">`;
   h+=`<button class="hcard" data-act="tab" data-v="attend"><span class="hc-l">Attendance today</span><span class="hc-big">${here}<small> of ${team().length}</small></span><span class="hc-go">${here?'See who\'s here ›':'Take attendance ›'}</span></button>`;
-  h+=`<button class="hcard" data-act="go-goal"><span class="hc-l">${esc(monthName(monthOf()))} goal</span><span class="hc-big">${g.hit.length}<small> of ${g.kids.length} dropped</small></span><span class="hc-bar"><span style="width:${Math.min(100,g.pct)}%"></span><i style="left:${g.target}%"></i></span><span class="hc-go">${g.pct>=g.target&&g.kids.length?'Goal reached!':g.need+' more to go ›'}</span></button>`;
   if(real.length){ const r=upcoming||real[0]; const n=Object.values(r.swims||{}).filter(w=>w&&(w.official!=null||w.time!=null)).length;
     h+=`<button class="hcard" data-act="pick-meet" data-v="${esc(r.id)}"><span class="hc-l">${upcoming?'Next meet':'Last meet'}</span><span class="hc-big hc-name">${esc(r.name||'Meet')}</span><span class="hc-sub">${esc(new Date((r.date||today)+'T12:00:00').toLocaleDateString([], {weekday:'short',month:'short',day:'numeric'}))} · ${r.entries.length} swims${n?' · '+n+' timed':''}</span><span class="hc-go">Open ›</span></button>`; }
   h+=`</div>`;
