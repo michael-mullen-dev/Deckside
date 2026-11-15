@@ -2875,13 +2875,13 @@ function viewCuts(){
 }
 function recEditBtns(r,kind){ if(!UI.recEdit) return '';
   const key=r.base?'base|'+r.grp+r.g+'|'+r.ev+'|'+kind:'swim|'+r.mid+'|'+r.eid;
-  return `<span class="rr-ed">${r.base?`<button class="btn sm" data-act="rec-move" data-v="${esc(key)}">Move to ${kind==='meet'?'practice':'meet'}</button>`:''}<button class="btn sm danger ${UI.armed==='rec-del|'+key?'armed':''}" data-act="rec-del" data-v="${esc(key)}">${UI.armed==='rec-del|'+key?'Tap again':'Remove'}</button></span>`; }
+  return `<span class="rr-ed"><button class="btn sm primary" data-act="rec-change" data-v="${esc(r.grp+r.g+'|'+r.ev+'|'+kind)}">Change</button>${r.base?`<button class="btn sm" data-act="rec-move" data-v="${esc(key)}">Move to ${kind==='meet'?'practice':'meet'}</button>`:''}<button class="btn sm danger ${UI.armed==='rec-del|'+key?'armed':''}" data-act="rec-del" data-v="${esc(key)}">${UI.armed==='rec-del|'+key?'Tap again':'Remove'}</button></span>`; }
 function recBoardHTML(cats,b,fresh,kind){ kind=kind||'meet'; b=b||recordBoard(kind); fresh=fresh||Date.now()-7*864e5; let h='';
   h+=`<div class="rboard c${cats.length}">${cats.map(([g,sx,nm])=>{ const rows=REC_EVENTS.map(([k,en])=>[k,en,b[g+sx+'|'+k]]); const set=rows.filter(x=>x[2]), open=rows.filter(x=>!x[2]);
     return `<section class="rcol ${sx==='F'?'girls':'boys'}"><header><span class="rcol-t">${esc(nm)}</span><span class="rcol-n">${set.length}<small>/${rows.length}</small></span></header>
       <div class="rrows">${set.map(([k,en,r])=>{ const isNew=!r.base&&r.at&&r.at>fresh; const yr=r.date?String(r.date).slice(0,4):'';
         return `<div class="rrow ${isNew?'new':''}"><span class="rr-ev">${esc(en)}</span><span class="rr-who"><b>${esc(r.name)}</b><small>${esc(recDate(r.date))}${isNew?' · <em>NEW</em>':''}</small></span><span class="rr-t">${fmt(r.time)}</span>${recEditBtns(r,kind)}</div>`; }).join('')||'<p class="rr-none">No records yet</p>'}</div>
-      ${open.length?`<div class="ropen"><span class="ropen-l">Up for grabs</span><span class="ropen-c">${open.map(([k,en])=>`<span>${esc(en)}</span>`).join('')}</span></div>`:''}</section>`; }).join('')}</div>`;
+      ${open.length?`<div class="ropen"><span class="ropen-l">Up for grabs</span><span class="ropen-c">${open.map(([k,en])=>UI.recEdit?`<button class="btn sm" data-act="rec-change" data-v="${esc(g+sx+'|'+k+'|'+kind)}">Set ${esc(en)}</button>`:`<span>${esc(en)}</span>`).join('')}</span></div>`:''}</section>`; }).join('')}</div>`;
   return h; }
 function recNav(){ const cur=UI.recTab||'rec';
   return `<nav class="rnav" aria-label="Records views">${[['rec','Records'],['goal','Monthly goal'],['rank','Rankings'],['top','Top 5'],['best','Best times'],['cuts','Qualifying times']].map(([x,t])=>`<button data-act="rec-tab" data-v="${x}" aria-pressed="${cur===x}">${t}</button>`).join('')}</nav>`; }
@@ -3200,6 +3200,13 @@ function renderSheet(){
     else if(s.type==='lineup-edit'){ [title,body]=sheetLineupEdit(); }
     else if(s.type==='groups'){ [title,body]=sheetGroups(); }
     else if(s.type==='records'){ [title,body]=sheetRecords(); }
+    else if(s.type==='rec-set'){ const [gk,ev,kind]=s.v.split('|'); const cur=recordBoard(kind)[gk+'|'+ev]; const cat=REC_CATS.find(c=>c[0]+c[1]===gk); const en=(REC_EVENTS.find(e=>e[0]===ev)||[,ev])[1];
+      title='Set record'; body=`<div class="stack"><p class="hint" style="margin:0"><b>${esc((cat?cat[2]:gk)+' · '+en)}</b> · ${kind==='meet'?'meet':'practice'} record${cur?'. Right now: '+esc(cur.name)+' '+fmt(cur.time):''}</p>
+        <label class="f">Swimmer<input id="rs-name" value="${esc(cur?cur.name:'')}" placeholder="Maya B." autocomplete="off"></label>
+        <label class="f">Time<input id="rs-time" inputmode="decimal" value="${cur?fmt(cur.time):''}" placeholder="32.45 or 1:05.29"></label>
+        <label class="f">Date<input id="rs-date" type="date" value="${esc(cur&&cur.date||todayISO())}"></label>
+        <p class="hint" style="margin:0">This becomes the record no matter what older swims say. A swim after today that's faster can still break it.</p>
+        <div class="row"><button class="btn primary" data-act="rec-save" data-v="${esc(s.v)}">Save record</button>${cur?`<button class="btn danger ${UI.armed==='rec-clear'?'armed':''}" data-act="rec-clear" data-v="${esc(s.v)}">${UI.armed==='rec-clear'?'Tap again: no record':'Clear this record'}</button>`:''}</div></div>`; }
     else if(s.type==='restore'){ title='Restore'; body=`<p class="hint">Pick a Deckside backup file, or paste backup text. This replaces what's on this device.</p><label class="f">Backup file<input type="file" id="restore-file" accept=".json,.txt,application/json,text/plain"></label><textarea id="restore-text" rows="8" placeholder="…or paste backup text here"></textarea><div class="row"><button class="btn primary" data-act="do-restore">Restore</button></div>`; }
     else if(s.type==='roster'){ UI.tab='setup'; closeSheet(); setTimeout(()=>{const t=$('#roster-text'); if(t){t.scrollIntoView({block:'center'}); t.focus();}},50); return; }
   }catch(err){ title='Something went wrong'; body=`<p>${esc(err.message)}</p>`; }
@@ -3840,6 +3847,16 @@ document.addEventListener('click',async ev=>{
     case 'rank-age': UI.rankAge=v; render(); break;
     case 'rec-kind': UI.recKind=v; render(); break;
     case 'rec-edit': UI.recEdit=!UI.recEdit; UI.armed=null; render(); break;
+    case 'rec-change': openSheet({type:'rec-set',v}); break;
+    case 'rec-save': { const [gk,ev,kind]=v.split('|'); const name=(($('#rs-name')||{}).value||'').trim(); const t=parseTime((($('#rs-time')||{}).value||'').trim()); const date=(($('#rs-date')||{}).value||'')||todayISO();
+      if(!name){ toast('Add the swimmer'); break; } if(t==null){ toast('Use a time like 32.45 or 1:05.29'); break; }
+      const cat=REC_CATS.find(c=>c[0]+c[1]===gk); if(!cat) break;
+      S.records=(S.records||[]).filter(r=>!((r.grp+r.g)===gk&&r.ev===ev&&(r.kind||'meet')===kind&&r.pin));
+      S.records.push({grp:cat[0],g:cat[1],ev,kind,name,time:t,date,pin:true,at:Date.now()}); save('core'); closeSheet(); toast('Record saved'); break; }
+    case 'rec-clear': { if(!arm('rec-clear')){ renderSheet(); break; } const [gk,ev,kind]=v.split('|'); const now=Date.now();
+      S.records=(S.records||[]).filter(r=>!((r.grp+r.g)===gk&&r.ev===ev&&(r.kind||'meet')===kind));
+      for(const x of recordSwims(kind)) if(x.k===gk+'|'+ev&&x.sw.rec!=='no'){ x.sw.rec='no'; save(x.m.id); }
+      save('core'); closeSheet(); toast('Record cleared'); break; }
     case 'rec-move': { const [,gk,ev,kind]=v.split('|'); const r=(S.records||[]).find(x=>(x.grp+x.g)===gk&&x.ev===ev&&(x.kind||'meet')===kind);
       if(r){ const to=kind==='meet'?'practice':'meet'; r.kind=to; save('core'); toast('Moved to '+to+' records'); } render(); break; }
     case 'rec-del': { if(UI.armed!=='rec-del|'+v){ UI.armed='rec-del|'+v; render(); break; } UI.armed=null; const p=v.split('|');
@@ -4064,11 +4081,12 @@ function recordSwims(kind){
 /* records only change once the coach confirms them (swim.rec==='yes'); 'no' means it was a mistake */
 /* two boards: meet records (official meets + the records you entered) and practice records (practices and race days) */
 function recordBoard(kind){ kind=kind||'meet';
-  const out={};
-  for(const r of (S.records||[]).filter(r=>(r.kind||'meet')===kind)){ if(!r.name||r.time==null) continue; const k=r.grp+r.g+'|'+r.ev; if(!out[k]||r.time<out[k].time) out[k]={...r,base:true}; }
+  const out={}, pins={};
+  for(const r of (S.records||[]).filter(r=>(r.kind||'meet')===kind&&r.pin)){ if(!r.name||r.time==null) continue; const k=r.grp+r.g+'|'+r.ev; if(!pins[k]||(r.at||0)>(pins[k].at||0)) pins[k]=r; }
+  for(const r of (S.records||[]).filter(r=>(r.kind||'meet')===kind)){ if(!r.name||r.time==null) continue; const k=r.grp+r.g+'|'+r.ev; if(pins[k]){ out[k]={...pins[k],base:true}; continue; } if(!out[k]||r.time<out[k].time) out[k]={...r,base:true}; }
   const base={...out};
-  // every swim counts on its own board; a record you remove (rec 'no') stays off
-  for(const x of recordSwims(kind)){ if(x.sw.rec==='no') continue;
+  // every swim counts on its own board; a record you remove (rec 'no') stays off; a record you set by hand only falls to a swim faster than it that happened after you set it
+  for(const x of recordSwims(kind)){ if(x.sw.rec==='no') continue; const pn=pins[x.k]; if(pn&&(x.sw.at||0)<=(pn.at||0)) continue;
     if(!out[x.k]||x.t<out[x.k].time) out[x.k]={grp:x.grp,g:x.g,ev:x.ev,time:x.t,name:(x.sm.nick||x.sm.first)+' '+x.sm.last.charAt(0)+'.',date:x.m.date,at:x.sw.at,mid:x.m.id,eid:x.e.id,base:false,was:base[x.k]||null}; }
   return out;
 }
