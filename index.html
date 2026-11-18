@@ -3428,7 +3428,7 @@ function progressCardHTML(id){ const P=progressData(id), s=P.s;
    Each lesson swimmer can get a private link for their family. The page shows the swimmer's first name,
    times from lessons, a progress chart and your lesson notes. Nothing else from Deckside is shared.
    Needs supabase-lesson-progress.sql run once in Supabase. */
-const FAMILY={url:'https://coach-michael-swim.netlify.app/progress',coach:'Coach Michael',table:'lesson_progress'};
+const FAMILY={url:'https://coachmichaelswims.com/progress',coach:'Coach Michael',table:'lesson_progress'};
 const FAM_ORDER=['FR','BK','BR','FL','IM'];
 function famToken(){ const a=new Uint8Array(24); crypto.getRandomValues(a); let s=''; for(const x of a) s+=String.fromCharCode(x); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 function famLink(s){ return s&&s.share&&s.share.t?FAMILY.url+'#t='+s.share.t:''; }
