@@ -1354,7 +1354,7 @@ function parseStdLine(line){
 /* ======================= app ======================= */
 const LS='deckside.v1';
 /* separate teams: each has its own data on this device (DK) and its own docs in sync (KP prefix). White Group keeps the original keys. */
-const SPACES=[{id:'white',name:'White Group',short:'White'},{id:'pc11',name:'Pre-Comp 11&O',short:'PC 11&O'},{id:'pc10',name:'Pre-Comp 10&U',short:'PC 10&U'}];
+const SPACES=[{id:'white',name:'White Group',short:'White'},{id:'pc11',name:'Pre-Comp 11&O',short:'PC 11&O'},{id:'pc10',name:'Pre-Comp 10&U',short:'PC 10&U'},{id:'lessons',name:'Private Lessons',short:'Lessons'}];
 const SPACE=(()=>{ let id='white'; try{ id=localStorage.getItem('deckside.space')||'white'; }catch(e){} return SPACES.find(x=>x.id===id)||SPACES[0]; })();
 const DK=SPACE.id==='white'?LS:LS+'.'+SPACE.id, KP=SPACE.id==='white'?'':SPACE.id+':';
 const $=s=>document.querySelector(s);
@@ -1566,7 +1566,7 @@ function paintSync(){
   el.hidden=s!=='nosave'; // only show up top when something's wrong (this device can't save)
 }
 function agoText(t){ if(!t) return ''; const m=Math.floor((Date.now()-t)/60000); return m<1?' just now':m<60?' '+m+' min ago':' '+Math.floor(m/60)+' hr ago'; }
-function setSync(s){ sync.status=s; if(s==='synced'&&!sync.dirty.size) sync.lastOk=Date.now(); paintSync(); }
+function setSync(s){ sync.status=s; if(s==='synced'&&!sync.dirty.size){ sync.lastOk=Date.now(); queueFamilies(); } paintSync(); }
 setInterval(()=>{ try{ paintSync(); }catch(e){} },30000);
 function downloadFile(name,text,type){ const b=new Blob([text],{type:type||'application/json'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(u); a.remove(); },1500); }
 const subs={core:null,meet:null,meetId:null,all:null};
@@ -3424,6 +3424,79 @@ function progressCardHTML(id){ const P=progressData(id), s=P.s;
     <div class="pc-stats"><div><b>${P.att.of?Math.round(P.att.n/P.att.of*100)+'%':'–'}</b><span>attendance${P.att.of?' · '+P.att.n+'/'+P.att.of:''}</span></div><div><b>${P.drops.length}</b><span>drop${P.drops.length===1?'':'s'} this month</span></div><div><b>${P.newCuts.length}</b><span>new cut${P.newCuts.length===1?'':'s'}</span></div><div><b>${P.bests.length}</b><span>best times</span></div></div>
     ${P.drops.length||P.newCuts.length?`<div class="pc-drops">${P.newCuts.map(n=>`<span class="cut"><b>${esc(n.c.name)}</b> ${esc(n.x.ev.dist+' '+STROKE_NAME[n.x.ev.stroke])}</span>`).join('')}${P.drops.slice(0,4).map(x=>`<span><b>−${fmtSec(x.drop)}</b> ${esc(x.ev.dist+' '+STROKE_NAME[x.ev.stroke])} <small>${fmt(x.time)}</small></span>`).join('')}</div>`:''}
   </section>`; }
+/* ---------- family pages (Private Lessons team only) ----------
+   Each lesson swimmer can get a private link for their family. The page shows the swimmer's first name,
+   times from lessons, a progress chart and your lesson notes. Nothing else from Deckside is shared.
+   Needs supabase-lesson-progress.sql run once in Supabase. */
+const FAMILY={url:'https://coach-michael-swim.netlify.app/progress',coach:'Coach Michael',table:'lesson_progress'};
+const FAM_ORDER=['FR','BK','BR','FL','IM'];
+function famToken(){ const a=new Uint8Array(24); crypto.getRandomValues(a); let s=''; for(const x of a) s+=String.fromCharCode(x); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function famLink(s){ return s&&s.share&&s.share.t?FAMILY.url+'#t='+s.share.t:''; }
+function famHash(str){ let h=5381; for(let i=0;i<str.length;i++) h=((h<<5)+h+str.charCodeAt(i))|0; return (h>>>0).toString(36); }
+function famState(){ try{ return JSON.parse(localStorage.getItem(DK+'.fam')||'{}')||{}; }catch(e){ return {}; } }
+function famSave(o){ try{ localStorage.setItem(DK+'.fam',JSON.stringify(o)); }catch(e){} }
+function famDate(d){ try{ return new Date(d+'T12:00:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}); }catch(e){ return d; } }
+/* what the family sees: first name, lesson times (best per event per day), new best times, and your notes */
+function familySummary(id){
+  const s=swimmer(id); if(!s) return null;
+  const evName=(ev,course)=>ev.dist+' '+(STROKE_NAME[ev.stroke]||ev.stroke)+(course&&course!=='SCY'?' '+course:'');
+  const hist=history(id).filter(x=>x.time!=null&&!x.sw.dq&&!x.e.relay&&x.time>=x.ev.dist*0.2);
+  const evs={}, days={};
+  for(const x of hist){ const k=x.key+'|'+x.course, d=String(x.m.date||todayISO()).slice(0,10), t=Math.round(x.time*100)/100;
+    const E=evs[k]||(evs[k]={name:evName(x.ev,x.course),dist:x.ev.dist,stroke:x.ev.stroke,pts:{},best:null});
+    const pb=E.best!=null&&t<E.best-0.004; if(E.best==null||t<E.best) E.best=t;
+    if(E.pts[d]==null||t<E.pts[d]) E.pts[d]=t;
+    (days[d]||(days[d]=[])).push({ev:E.name,t,pb,o:FAM_ORDER.indexOf(x.ev.stroke)*1000+x.ev.dist}); }
+  const events=Object.values(evs).sort((a,b)=>FAM_ORDER.indexOf(a.stroke)-FAM_ORDER.indexOf(b.stroke)||a.dist-b.dist).map(E=>{
+    const pts=Object.keys(E.pts).sort().map(d=>({d,t:E.pts[d]}));
+    let best=pts[0]; for(const q of pts) if(q.t<best.t) best=q;
+    return {name:E.name,best,first:pts[0],pts}; });
+  const notes=s.lessonNotes||{}, today=todayISO();
+  const came=Object.keys(S.attendance||{}).filter(d=>(S.attendance[d]||[]).includes(id));
+  const dates=[...new Set([...Object.keys(days),...Object.keys(notes).filter(d=>notes[d]),...came])].filter(d=>d<=today).sort().reverse().slice(0,40);
+  const lessons=dates.map(d=>({d,note:notes[d]||'',swims:(days[d]||[]).sort((a,b)=>a.o-b.o||a.t-b.t).map(x=>({ev:x.ev,t:x.t,pb:x.pb}))}));
+  return {v:1,name:s.nick||s.first||'Your swimmer',coach:FAMILY.coach,events,lessons}; }
+let famTimer=null, famBusy=false;
+function queueFamilies(){ if(SPACE.id!=='lessons'||!sync.db||S.demo) return; clearTimeout(famTimer); famTimer=setTimeout(publishFamilies,1200); }
+function famErrText(e){ const m=String((e&&(e.message||e.code))||e||''); if(/lesson_progress|42P01|PGRST20\d|schema cache|does not exist/i.test(m)) return 'setup'; if(/timeout|fetch|network|load failed/i.test(m)) return 'offline'; return m.slice(0,120)||'error'; }
+/* send each family page that changed, and remove links that were turned off, replaced, or belong to swimmers taken off the roster */
+async function publishFamilies(){
+  if(famBusy||!sync.db||S.demo||SPACE.id!=='lessons') return;
+  if(sync.team||sync.uid!==sync.me) return;   // family pages are published from the head coach's account
+  famBusy=true; const st=famState(); st.sent=st.sent||{};
+  try{
+    const live=new Set(); for(const s of S.roster) if(!s.out&&s.share&&s.share.t) live.add(s.share.t);
+    const r=await withTimeout(sync.db.from(FAMILY.table).select('token').eq('owner_id',sync.me)); if(r.error) throw r.error;
+    const stale=(r.data||[]).map(x=>x.token).filter(t=>!live.has(t));
+    if(stale.length){ const d=await withTimeout(sync.db.from(FAMILY.table).delete().eq('owner_id',sync.me).in('token',stale)); if(d.error) throw d.error; }
+    for(const t in st.sent) if(!live.has(t)) delete st.sent[t];
+    for(const s of S.roster){ if(s.out||!s.share||!s.share.t) continue;
+      const data=familySummary(s.id); const sig=famHash(J(data)); if(st.sent[s.share.t]===sig) continue;
+      const at=new Date().toISOString();
+      const u=await withTimeout(sync.db.from(FAMILY.table).upsert({token:s.share.t,owner_id:sync.me,swimmer_id:s.id,data,updated_at:at},{onConflict:'token'})); if(u.error) throw u.error;
+      st.sent[s.share.t]=sig; }
+    st.ok=Date.now(); st.err=null;
+  }catch(e){ st.err=famErrText(e); }
+  famSave(st); famBusy=false;
+  const a=document.activeElement; if(UI.sheet&&UI.sheet.type==='swimmer'&&!(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) renderSheet(); }
+function familySection(id){ const s=swimmer(id); if(!s) return ''; const first=esc(s.nick||s.first||'this swimmer'), sid=esc(id); const st=famState(), link=famLink(s);
+  let h=`<section class="stack"><div class="sec-h"><h2>Family page</h2><span class="small muted">times, progress, your notes</span></div><div class="card stack">`;
+  if(!link) h+=`<p class="hint" style="margin:0">Give ${first}'s family a private page with their lesson times, a progress chart and your notes. It updates on its own every time you sync.</p>`+(sync.db&&!S.demo?`<div class="row"><button class="btn primary" data-act="fam-on" data-v="${sid}">Create family link</button></div>`:`<p class="small muted" style="margin:0">Sign in first so the page can update.</p>`);
+  else { const sent=st.sent&&st.sent[s.share.t];
+    const status=st.err==='setup'?'Family pages need a one-time setup in Supabase first.':st.err==='offline'?'Saved on this phone. The page updates when you have signal.':st.err?"Couldn't update the page: "+esc(st.err):sent?'Page is up to date'+(st.ok?' · checked'+agoText(st.ok):''):'Updating the page…';
+    h+=`<input class="fam-url" readonly value="${esc(link)}" aria-label="${first}'s family link" data-act="fam-sel" style="width:100%">
+      <div class="row"><button class="btn primary" data-act="fam-share" data-v="${sid}">Send link</button><button class="btn" data-act="fam-copy" data-v="${sid}">Copy</button><button class="btn" data-act="fam-open" data-v="${sid}">Open</button></div>
+      <p class="small muted" style="margin:0">${status}</p>
+      <div class="row"><button class="btn sm ${UI.armed==='fam-new-'+id?'armed':''}" data-act="fam-new" data-v="${sid}">${UI.armed==='fam-new-'+id?'Tap again: the old link stops working':'New link'}</button><button class="btn sm danger ${UI.armed==='fam-off-'+id?'armed':''}" data-act="fam-off" data-v="${sid}">${UI.armed==='fam-off-'+id?'Tap again to turn off':'Turn off link'}</button></div>`; }
+  h+='</div>';
+  const notes=s.lessonNotes||{}, dr=UI.famDraft&&UI.famDraft.id===id?UI.famDraft:{date:todayISO(),text:notes[todayISO()]||''};
+  h+=`<div class="card stack"><div class="eyebrow">Lesson notes</div><p class="hint" style="margin:0">A short note after each lesson: what you worked on and what to practice next. ${link?'The family sees it on their page.':'Families see these once they have a link.'}</p>
+    <label class="f">Lesson date<input type="date" id="fn-d" value="${esc(dr.date)}" max="${todayISO()}"></label>
+    <label class="f">Note<textarea id="fn-t" rows="3" maxlength="600" placeholder="Worked on breaststroke timing. Next: hold the glide after every kick.">${esc(dr.text)}</textarea></label>
+    <div class="row"><button class="btn primary" data-act="fam-note" data-v="${sid}">Save note</button></div>`;
+  const ds=Object.keys(notes).filter(d=>notes[d]).sort().reverse();
+  if(ds.length) h+=`<div>${ds.slice(0,12).map(d=>{ const k='fam-nd-'+id+d; return `<div class="row" style="justify-content:space-between;align-items:flex-start;gap:10px;padding:12px 0;border-top:1px solid var(--line)"><span style="min-width:0"><b>${esc(famDate(d))}</b><br><span class="small">${esc(notes[d])}</span></span><span class="row" style="flex:none;gap:6px"><button class="btn sm" data-act="fam-note-edit" data-v="${sid}" data-d="${esc(d)}">Edit</button><button class="btn sm danger ${UI.armed===k?'armed':''}" data-act="fam-note-del" data-v="${sid}" data-d="${esc(d)}">${UI.armed===k?'Tap again':'Delete'}</button></span></div>`; }).join('')}</div>`;
+  return h+'</div></section>'; }
 function progressSections(id){ const keys={}; for(const x of swimsWithPrior(id)) keys[x.k]=(keys[x.k]||0)+1; const ORDER=['FL','BK','BR','FR','IM'];
   const evKeys=Object.keys(keys).sort((a,b)=>{ const [da,sa]=a.split('|')[0].split(' '), [db,sb]=b.split('|')[0].split(' '); return ORDER.indexOf(sa)-ORDER.indexOf(sb)||da-db; });
   UI.chartEv=UI.chartEv||{}; let ck=UI.chartEv[id]; if(!ck||!keys[ck]) ck=evKeys.slice().sort((a,b)=>keys[b]-keys[a])[0];
@@ -3455,7 +3528,7 @@ function roundRect(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x
 function sheetSwimmer(id){
   const s=swimmer(id); if(!s) return ['Swimmer','<p>Not found.</p>'];
   const hist=history(id);
-  let h=progressSections(id);
+  let h=(SPACE.id==='lessons'?familySection(id):'')+progressSections(id);
   // bests
   const bests={};
   for(const x of hist){ if(x.time==null||x.practice) continue; const k=x.key+'|'+x.course; if(!bests[k]||x.time<bests[k].time) bests[k]=x; }
@@ -3752,6 +3825,19 @@ document.addEventListener('click',async ev=>{
     case 'swim-del': { const mm=S.meets[b.dataset.meet]; if(!arm('sdel-'+b.dataset.meet+'|'+v)){ renderSheet(); break; } if(delSwim(mm,v)){ toast('Time deleted'); render(); renderSheet(); } break; }
     case 'meet-del': { if(!arm('mdel-'+v)){ renderSheet(); break; } const nm=(S.meets[v]&&S.meets[v].name)||'Meet'; deleteMeet(v); toast(nm+' deleted'); render(); renderSheet(); break; }
     case 'entry-in': if(b.dataset.meet!==S.active){ S.active=b.dataset.meet; save('core'); } openSheet({type:'entry',v}); break;
+    case 'fam-on': { const sm=swimmer(v); if(!sm) break; sm.share={t:famToken(),at:Date.now()}; save('core'); renderSheet(); queueFamilies(); toast('Family link created'); break; }
+    case 'fam-new': { if(!arm('fam-new-'+v)){ renderSheet(); break; } const sm=swimmer(v); if(!sm) break; sm.share={t:famToken(),at:Date.now()}; save('core'); renderSheet(); queueFamilies(); toast('New link made. The old one no longer works.'); break; }
+    case 'fam-off': { if(!arm('fam-off-'+v)){ renderSheet(); break; } const sm=swimmer(v); if(!sm) break; delete sm.share; save('core'); renderSheet(); queueFamilies(); toast('Family link turned off'); break; }
+    case 'fam-sel': { try{ b.select(); }catch(e){} break; }
+    case 'fam-open': { const l=famLink(swimmer(v)); if(l) window.open(l,'_blank','noopener'); break; }
+    case 'fam-copy': { const l=famLink(swimmer(v)); if(!l) break; try{ await navigator.clipboard.writeText(l); toast('Link copied'); }catch(e){ toast('Press and hold the link to copy it'); } break; }
+    case 'fam-share': { const sm=swimmer(v), l=famLink(sm); if(!l) break; const nm=sm.nick||sm.first||'Your swimmer'; const msg=nm+"'s swim progress page from lessons with "+FAMILY.coach;
+      if(navigator.share){ try{ await navigator.share({title:nm+"'s progress",text:msg,url:l}); }catch(e){} }
+      else location.href='sms:?&body='+encodeURIComponent(msg+': '+l); break; }
+    case 'fam-note': { const sm=swimmer(v); if(!sm) break; const d=(($('#fn-d')||{}).value||todayISO()).slice(0,10), t=String(($('#fn-t')||{}).value||'').trim();
+      sm.lessonNotes={...(sm.lessonNotes||{})}; if(t) sm.lessonNotes[d]=t; else delete sm.lessonNotes[d]; UI.famDraft=null; save('core'); renderSheet(); queueFamilies(); toast(t?'Note saved':'Note removed'); break; }
+    case 'fam-note-edit': { const sm=swimmer(v); if(!sm) break; const d=b.dataset.d; UI.famDraft={id:v,date:d,text:(sm.lessonNotes||{})[d]||''}; renderSheet(); setTimeout(()=>{ const t=$('#fn-t'); if(t) t.focus(); },60); break; }
+    case 'fam-note-del': { const d=b.dataset.d; if(!arm('fam-nd-'+v+d)){ renderSheet(); break; } const sm=swimmer(v); if(sm&&sm.lessonNotes){ sm.lessonNotes={...sm.lessonNotes}; delete sm.lessonNotes[d]; save('core'); renderSheet(); queueFamilies(); toast('Note deleted'); } break; }
     case 'sw-chart': { UI.chartEv=UI.chartEv||{}; UI.chartEv[v]=b.dataset.k; renderSheet(); break; }
     case 'prog-copy': { const txt=progressText(v); try{ await navigator.clipboard.writeText(txt); toast('Copied. Paste it into your message.'); }catch(e){ openSheet({type:'text',v:txt,title:'Progress for parent'}); } break; }
     case 'prog-img': { const blob=await progressImage(v); const sm=swimmer(v); const name=((sm.nick||sm.first)+'-'+sm.last+'-'+monthOf()).replace(/\s+/g,'-')+'.png';
